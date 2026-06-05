@@ -59,13 +59,17 @@ rules:
           fields:
               - column: "EMAIL"
                 strategy: "email_fake"
+                salt_source: "primary"
               - column: "LOGIN"
                 strategy: "string_random"
                 options: { length: 10, prefix: "user_" }
+                salt_source: "primary"
               - column: "NAME"
                 strategy: "name_fake"
+                salt_source: "primary"
               - column: "PERSONAL_PHONE"
                 strategy: "phone_fake"
+                salt_source: "primary"
           where: "ID NOT IN (1)"
 ```
 
@@ -73,8 +77,14 @@ rules:
 К столбцам будут приведены правила:
 - `EMAIL` - будет заменен на случайный
 - `LOGIN` - будет состоять из 10 символов с префиксом `user_`
-- `NAME` - будет заменен на имея 
+- `NAME` - будет заменен на имя
 - `PERSONAL_PHONE` - будет заменен на телефон
+
+> **Важно:** Параметр `salt_source: "primary"` указывает, что для генерации фейкового значения
+> используется первичный ключ записи. Это гарантирует уникальность результата для каждой строки
+> и предотвращает коллизии при наличии уникальных индексов (например, `ix_login` в `b_user`).
+> Без `salt_source` детерминированные стратегии используют `crc32(original_value)` в качестве сида,
+> что может привести к одинаковому результату для разных исходных значений.
 
 ## Группы согласованности
 
@@ -96,7 +106,7 @@ consistency_groups:
       generator:
           deterministic: true
           strategy: "phone_fake"
-          salt_source: "row_id"
+          salt_source: "primary"
       targets:
           - table: "target_table1"
             column: "field_name"
@@ -129,7 +139,7 @@ consistency_groups:
       generator:
           deterministic: true
           strategy: "phone_fake"
-          salt_source: "row_id"
+          salt_source: "primary"
       targets:
           - table: "b_crm_field_multi"
             column: "VALUE"
@@ -150,7 +160,7 @@ consistency_groups:
       generator:
           deterministic: true
           strategy: "email_fake"
-          salt_source: "row_id"
+          salt_source: "primary"
       targets:
           - table: "b_crm_field_multi"
             column: "VALUE"
@@ -171,9 +181,20 @@ consistency_groups:
 
 ### Управление детерминизмом
 
-- `salt_source: null` - Случайный вывод при каждом запуске
-- `salt_source: "row_id"` - Детерминированный на основе ID строки якоря (рекомендуется)
-- `salt_source: "id"` - Детерминированный на основе первичного ключа
+Каждое поле в `rules.tables` поддерживает параметр `salt_source`, который определяет источник «соли»
+для генерации фейкового значения:
+
+- `salt_source: "primary"` — детерминированный на основе первичного ключа записи (рекомендуется для `rules`)
+- `salt_source: "value"` — детерминированный на основе оригинального значения поля
+
+> **Рекомендация:** Всегда указывайте `salt_source: "primary"` для полей со стратегиями, отличными от `empty`.
+> Это гарантирует:
+> - Уникальность результата для каждой строки (два разных ID всегда дадут разные значения)
+> - Предсказуемость при повторных запусках (один и тот же ID всегда даст одно значение)
+> - Отсутствие коллизий при наличии уникальных индексов на столбце
+>
+> Без `salt_source` стратегии используют `crc32(оригинальное_значение)` как сид, и разные
+> исходные значения могут дать одинаковый результат (коллизия CRC32).
 
 ### Параметры string_random
 
@@ -184,6 +205,7 @@ fields:
       options:
           prefix: "user_"
           length: 10
+      salt_source: "primary"
 ```
 
 ## Полный пример конфигурации
@@ -208,15 +230,20 @@ rules:
           fields:
               - column: "EMAIL"
                 strategy: "email_fake"
+                salt_source: "primary"
               - column: "LOGIN"
                 strategy: "string_random"
                 options: { length: 10, prefix: "user_" }
+                salt_source: "primary"
               - column: "NAME"
                 strategy: "name_fake"
+                salt_source: "primary"
               - column: "LAST_NAME"
                 strategy: "lastname_fake"
+                salt_source: "primary"
               - column: "PERSONAL_PHONE"
                 strategy: "phone_fake"
+                salt_source: "primary"
           where: "ID NOT IN (1)"
 
 consistency_groups:
@@ -231,7 +258,7 @@ consistency_groups:
       generator:
           deterministic: true
           strategy: "phone_fake"
-          salt_source: "row_id"
+          salt_source: "primary"
       targets:
           - table: "b_crm_field_multi"
             column: "VALUE"
@@ -257,7 +284,7 @@ consistency_groups:
       generator:
           deterministic: true
           strategy: "email_fake"
-          salt_source: "row_id"
+          salt_source: "primary"
       targets:
           - table: "b_crm_field_multi"
             column: "VALUE"

@@ -19,7 +19,7 @@ class BitrixSettingsParser
 
     /**
      * @throws     \DataVeil\Exception\ConfigValidationException
-     * @return     array<string, string>
+     * @return     array{host: string, port: int, database: string, login: string, password: string}
      */
     public function parse(): array
     {
@@ -41,6 +41,7 @@ class BitrixSettingsParser
 
         return [
             'host' => $connectionConfig['host'] ?? 'localhost',
+            'port' => (int) ($connectionConfig['port'] ?? 3306),
             'database' => $connectionConfig['database'] ?? '',
             'login' => $connectionConfig['login'] ?? 'root',
             'password' => $connectionConfig['password'] ?? '',

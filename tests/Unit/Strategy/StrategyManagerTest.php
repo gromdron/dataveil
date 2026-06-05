@@ -52,7 +52,7 @@ class StrategyManagerTest extends TestCase
             strategyName: "exactly8",
             options: ["prefix" => "usr_", "length" => 8],
         );
-        $this->strategyManager->register($strategy);
+        $this->strategyManager->register("exactly8", $strategy);
 
         $result = $this->strategyManager->generate("exactly8", "123456");
 
@@ -87,5 +87,102 @@ class StrategyManagerTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
 
         $this->strategyManager->generate("unknown_strategy", "test");
+    }
+
+    public function testCustomStrategyFromConfig(): void
+    {
+        $manager = new StrategyManager([
+            [
+                'name' => 'user_login',
+                'type' => 'string_random',
+                'options' => ['length' => 10, 'prefix' => 'user_'],
+            ],
+        ]);
+
+        $result = $manager->generate("user_login", "test123");
+
+        $this->assertStringStartsWith("user_", $result);
+        $this->assertEquals(15, strlen($result));
+    }
+
+    public function testCustomStrategyOverridesBuiltin(): void
+    {
+        $manager = new StrategyManager([
+            [
+                'name' => 'email_fake',
+                'type' => 'string_random',
+                'options' => ['length' => 4, 'prefix' => 'test_'],
+            ],
+        ]);
+
+        $result = $manager->generate("email_fake", "value");
+
+        $this->assertStringStartsWith("test_", $result);
+        $this->assertEquals(9, strlen($result));
+    }
+
+    public function testBuiltinStrategiesStillAvailableWithCustom(): void
+    {
+        $manager = new StrategyManager([
+            [
+                'name' => 'my_string',
+                'type' => 'string_random',
+                'options' => ['length' => 5, 'prefix' => ''],
+            ],
+        ]);
+
+        $email = $manager->generate("email_fake", "user123");
+        $this->assertStringContainsString("@fake.local", $email);
+
+        $custom = $manager->generate("my_string", "test");
+        $this->assertEquals(5, strlen($custom));
+    }
+
+    public function testCustomStrategyWithUnknownTypeThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("Unknown strategy type: 'nonexistent'");
+
+        new StrategyManager([
+            [
+                'name' => 'bad_strategy',
+                'type' => 'nonexistent',
+            ],
+        ]);
+    }
+
+    public function testMultipleCustomStrategies(): void
+    {
+        $manager = new StrategyManager([
+            [
+                'name' => 'short',
+                'type' => 'string_random',
+                'options' => ['length' => 3, 'prefix' => ''],
+            ],
+            [
+                'name' => 'long',
+                'type' => 'string_random',
+                'options' => ['length' => 20, 'prefix' => 'id_'],
+            ],
+        ]);
+
+        $short = $manager->generate("short", "test");
+        $long = $manager->generate("long", "test");
+
+        $this->assertEquals(3, strlen($short));
+        $this->assertEquals(23, strlen($long));
+        $this->assertStringStartsWith("id_", $long);
+    }
+
+    public function testGetTypeMap(): void
+    {
+        $map = StrategyManager::getTypeMap();
+
+        $this->assertArrayHasKey('email_fake', $map);
+        $this->assertArrayHasKey('phone_fake', $map);
+        $this->assertArrayHasKey('name_fake', $map);
+        $this->assertArrayHasKey('lastname_fake', $map);
+        $this->assertArrayHasKey('string_random', $map);
+        $this->assertArrayHasKey('empty', $map);
     }
 }

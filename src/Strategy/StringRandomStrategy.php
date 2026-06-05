@@ -17,7 +17,7 @@ class StringRandomStrategy extends AbstractStrategy
      */
     public function __construct(string $strategyName = "string_random", array $options = [])
     {
-        parent::__construct($strategyName);
+        parent::__construct($strategyName, $options);
         $this->prefix = isset($options['prefix'])? strval($options['prefix']) : '';
         $this->length = isset($options['length'])? intval($options['length']) : 8;
     }

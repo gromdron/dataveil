@@ -17,16 +17,21 @@ rules:
           action: "update"
           fields:
               - column: "EMAIL"
-                strategy: "email_fake" # Генерация вида user_{id}@fake.local
+                strategy: "email_fake"
+                salt_source: "primary"
               - column: "LOGIN"
                 strategy: "string_random"
                 options: { length: 10, prefix: "user_" }
+                salt_source: "primary"
               - column: "NAME"
                 strategy: "name_fake"
+                salt_source: "primary"
               - column: "LAST_NAME"
                 strategy: "lastname_fake"
+                salt_source: "primary"
               - column: "PERSONAL_PHONE"
                 strategy: "phone_fake"
+                salt_source: "primary"
           # Исключения (какие записи не трогать)
           where: "ID NOT IN (1)"
 consistency_groups:
@@ -54,7 +59,7 @@ consistency_groups:
           deterministic: true
           strategy: "phone_fake"
           # Соль может включать ID строки, чтобы номера не повторялись
-          salt_source: "row_id"
+          salt_source: "primary"
 
       # 3. Цели (Куда записать сгенерированное значение)
       targets:
@@ -99,7 +104,7 @@ consistency_groups:
       generator:
           deterministic: true
           strategy: "email_fake"
-          salt_source: "row_id"
+          salt_source: "primary"
       targets:
           - table: "b_crm_field_multi"
             column: "VALUE"

@@ -15,6 +15,12 @@ class Configuration
     private array $config;
     private string $settingsFile = '/home/bitrix/www/bitrix/.settings.php';
     private string $connectionName = 'default';
+    private string $source = 'bitrix_settings';
+    private string $host = '';
+    private int $port = 3306;
+    private string $database = '';
+    private string $login = '';
+    private string $password = '';
 
     public function __construct(string $configPath)
     {
@@ -45,12 +51,14 @@ class Configuration
 
         if (
             !is_string($this->config['database']['source']) ||
-            !in_array($this->config['database']['source'], ['bitrix_settings'])
+            !in_array($this->config['database']['source'], ['bitrix_settings', 'mysql'])
         ) {
             throw new ConfigValidationException(
-                "Undefined 'database.source' type. Expected: ['bitrix_settings']"
+                "Undefined 'database.source' type. Expected: ['bitrix_settings', 'mysql']"
             );
         }
+
+        $this->source = $this->config['database']['source'];
 
         if ($this->config['database']['source'] === 'bitrix_settings') {
             if (!isset($this->config['database']['bitrix'])) {
@@ -73,16 +81,91 @@ class Configuration
 
             $this->settingsFile = $bitrixConfig['settings_file'];
             $this->connectionName = $bitrixConfig['connection_name'];
+
+            if (!file_exists($this->settingsFile)) {
+                throw new ConfigValidationException(
+                    "Bitrix settings file not found: {$this->settingsFile}"
+                );
+            }
         }
 
-        /**
-         * @todo Add raw mysql config
-         */
+        if ($this->config['database']['source'] === 'mysql') {
+            if (!isset($this->config['database']['mysql'])) {
+                throw new ConfigValidationException(
+                    "Missing 'database.mysql' section in configuration"
+                );
+            }
+
+            $mysqlConfig = $this->config['database']['mysql'];
+
+            if (!isset($mysqlConfig['host']) || !is_string($mysqlConfig['host'])) {
+                throw new ConfigValidationException(
+                    "Missing or invalid 'host' in database.mysql configuration"
+                );
+            }
+
+            if (!isset($mysqlConfig['database']) || !is_string($mysqlConfig['database'])) {
+                throw new ConfigValidationException(
+                    "Missing or invalid 'database' in database.mysql configuration"
+                );
+            }
+
+            if (!isset($mysqlConfig['login']) || !is_string($mysqlConfig['login'])) {
+                throw new ConfigValidationException(
+                    "Missing or invalid 'login' in database.mysql configuration"
+                );
+            }
+
+            if (!isset($mysqlConfig['password'])) {
+                throw new ConfigValidationException(
+                    "Missing 'password' in database.mysql configuration"
+                );
+            }
+
+            $this->host = $mysqlConfig['host'];
+            $this->port = $mysqlConfig['port'] ?? 3306;
+            $this->database = $mysqlConfig['database'];
+            $this->login = $mysqlConfig['login'];
+            $this->password = $mysqlConfig['password'];
+        }
+
+        if (isset($this->config['strategies']) && \is_array($this->config['strategies'])) {
+            $this->validateStrategies();
+        }
 
         if (isset($this->config['consistency_groups']) && \is_array($this->config['consistency_groups'])) {
             foreach ($this->config['consistency_groups'] as $index => $group) {
                 $this->validateConsistencyGroup($group, $index);
             }
+        }
+    }
+
+    private function validateStrategies(): void
+    {
+        $names = [];
+
+        foreach ($this->config['strategies'] as $index => $strategy) {
+            if (!isset($strategy['name']) || !is_string($strategy['name'])) {
+                throw new ConfigValidationException(
+                    "Strategy {$index}: missing or invalid 'name'"
+                );
+            }
+
+            if (!isset($strategy['type']) || !is_string($strategy['type'])) {
+                throw new ConfigValidationException(
+                    "Strategy '{$strategy['name']}': missing or invalid 'type'"
+                );
+            }
+
+            $name = $strategy['name'];
+
+            if (isset($names[$name])) {
+                throw new ConfigValidationException(
+                    "Duplicate strategy name: '{$name}'"
+                );
+            }
+
+            $names[$name] = true;
         }
     }
 
@@ -113,15 +196,24 @@ class Configuration
     }
 
     /**
-     * @todo Return mysql connection data instead of sessings and connection
-     * @return     array<string, string>
+     * @return array<string, mixed>
      */
     public function getDatabaseConfig(): array
     {
-        return [
-            'settings_file' => $this->settingsFile,
-            'connection_name' => $this->connectionName,
-        ];
+        $config = ['source' => $this->source];
+
+        if ($this->source === 'bitrix_settings') {
+            $config['settings_file'] = $this->settingsFile;
+            $config['connection_name'] = $this->connectionName;
+        } else {
+            $config['host'] = $this->host;
+            $config['port'] = $this->port;
+            $config['database'] = $this->database;
+            $config['login'] = $this->login;
+            $config['password'] = $this->password;
+        }
+
+        return $config;
     }
 
     /**
@@ -138,5 +230,13 @@ class Configuration
     public function getConsistencyGroups(): array
     {
         return $this->config['consistency_groups'] ?? [];
+    }
+
+    /**
+     * @return     array<int, array{name: string, type: string, options?: array<string, mixed>}>
+     */
+    public function getStrategies(): array
+    {
+        return $this->config['strategies'] ?? [];
     }
 }

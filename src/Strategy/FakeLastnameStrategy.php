@@ -16,15 +16,20 @@ class FakeLastnameStrategy extends AbstractStrategy
         'Захаров', 'Березин', 'Сорокин', 'Краснов', 'Головин', 'Калинин', 'Кравцов', 'Филиппов', 'Кириллов', 'Матвеев',
     ];
 
-    public function __construct(string $strategyName = "lastname_fake")
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function __construct(string $strategyName = "lastname_fake", array $options = [])
     {
-        parent::__construct($strategyName);
+        parent::__construct($strategyName, $options);
     }
 
     public function generate(mixed $originalValue, ?string $salt = null): string
     {
         if ($salt !== null) {
             $id = intval($salt);
+        } elseif ($originalValue === null) {
+            return '';
         } elseif (is_numeric($originalValue)) {
             $id = $originalValue;
         } else {

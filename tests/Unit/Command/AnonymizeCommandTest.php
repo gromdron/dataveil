@@ -15,13 +15,11 @@ class AnonymizeCommandTest extends TestCase
 
         $configPath = __DIR__ . '/../../configuration.yaml';
 
-        $tester->execute([
+        $result = $tester->execute([
             'config' => $configPath,
         ]);
 
-        $output = $tester->getDisplay();
-        
-        $this->assertStringContainsString('Anonymization', $output);
+        $this->assertNotSame(0, $result);
     }
 
     public function testCommandFailsOnInvalidConfig(): void

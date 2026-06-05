@@ -6,9 +6,12 @@ namespace DataVeil\Strategy;
 
 class EmptyStringStrategy extends AbstractStrategy
 {
-    public function __construct(string $strategyName = "empty")
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function __construct(string $strategyName = "empty", array $options = [])
     {
-        parent::__construct($strategyName);
+        parent::__construct($strategyName, $options);
     }
 
     public function generate(mixed $originalValue, ?string $salt = null): string

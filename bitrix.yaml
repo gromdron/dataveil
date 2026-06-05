@@ -1,7 +1,3 @@
-#
-# Example with default configuration
-# WARNING: Untested
-# 
 version: 1.0
 
 database:
@@ -10,1371 +6,1506 @@ database:
         settings_file: "/home/bitrix/www/bitrix/.settings.php"
         connection_name: "default"
 
+strategies:
+    # ============================================================
+    # БАЗОВЫЕ ТИПЫ
+    # ============================================================
+    - name: "empty"
+      type: "empty"
+
+    - name: "email_fake"
+      type: "email_fake"
+
+    - name: "name_fake"
+      type: "name_fake"
+
+    - name: "lastname_fake"
+      type: "lastname_fake"
+
+    - name: "phone_fake"
+      type: "phone_fake"
+
+    # ============================================================
+    # СТРОКИ БЕЗ ПРЕФИКСА (для адресов, полей, кодов)
+    # ============================================================
+    - name: "str_4"
+      type: "string_random"
+      options: { length: 4, prefix: "" }
+
+    - name: "str_5"
+      type: "string_random"
+      options: { length: 5, prefix: "" }
+
+    - name: "str_6"
+      type: "string_random"
+      options: { length: 6, prefix: "" }
+
+    - name: "str_8"
+      type: "string_random"
+      options: { length: 8, prefix: "" }
+
+    - name: "str_9"
+      type: "string_random"
+      options: { length: 9, prefix: "" }
+
+    - name: "str_10"
+      type: "string_random"
+      options: { length: 10, prefix: "" }
+
+    - name: "str_11"
+      type: "string_random"
+      options: { length: 11, prefix: "" }
+
+    - name: "str_12"
+      type: "string_random"
+      options: { length: 12, prefix: "" }
+
+    - name: "str_13"
+      type: "string_random"
+      options: { length: 13, prefix: "" }
+
+    - name: "str_15"
+      type: "string_random"
+      options: { length: 15, prefix: "" }
+
+    - name: "str_16"
+      type: "string_random"
+      options: { length: 16, prefix: "" }
+
+    - name: "str_20"
+      type: "string_random"
+      options: { length: 20, prefix: "" }
+
+    # ============================================================
+    # СТРОКИ С ПРЕФИКСОМ (для осмысленных значений)
+    # ============================================================
+    - name: "ip_private"
+      type: "string_random"
+      options: { length: 8, prefix: "192.168." }
+
+    - name: "user_login"
+      type: "string_random"
+      options: { length: 10, prefix: "user_" }
+
+    - name: "company"
+      type: "string_random"
+      options: { length: 10, prefix: "Company_" }
+
+    - name: "dept"
+      type: "string_random"
+      options: { length: 8, prefix: "Dept_" }
+
+    - name: "www"
+      type: "string_random"
+      options: { length: 12, prefix: "www." }
+
+    - name: "chat_title"
+      type: "string_random"
+      options: { length: 10, prefix: "Chat_" }
+
+    - name: "client"
+      type: "string_random"
+      options: { length: 10, prefix: "Client_" }
+
+    - name: "group"
+      type: "string_random"
+      options: { length: 10, prefix: "Group_" }
+
+    - name: "mail_login"
+      type: "string_random"
+      options: { length: 10, prefix: "mail_" }
+
+    - name: "msg"
+      type: "string_random"
+      options: { length: 10, prefix: "Msg_" }
+
+    - name: "pm"
+      type: "string_random"
+      options: { length: 10, prefix: "PM_" }
+
+    - name: "post"
+      type: "string_random"
+      options: { length: 10, prefix: "Post_" }
+
+    - name: "req"
+      type: "string_random"
+      options: { length: 10, prefix: "Req_" }
+
+    - name: "activity"
+      type: "string_random"
+      options: { length: 12, prefix: "Activity_" }
+
+    - name: "bank"
+      type: "string_random"
+      options: { length: 12, prefix: "Bank_" }
+
+    - name: "bptask"
+      type: "string_random"
+      options: { length: 12, prefix: "BPTask_" }
+
+    - name: "deal"
+      type: "string_random"
+      options: { length: 12, prefix: "Deal_" }
+
+    - name: "doc"
+      type: "string_random"
+      options: { length: 12, prefix: "Doc_" }
+
+    - name: "event"
+      type: "string_random"
+      options: { length: 12, prefix: "Event_" }
+
+    - name: "item"
+      type: "string_random"
+      options: { length: 12, prefix: "Item_" }
+
+    - name: "lead"
+      type: "string_random"
+      options: { length: 12, prefix: "Lead_" }
+
+    - name: "quote"
+      type: "string_random"
+      options: { length: 12, prefix: "Quote_" }
+
+    - name: "task"
+      type: "string_random"
+      options: { length: 12, prefix: "Task_" }
+
+    - name: "ticket"
+      type: "string_random"
+      options: { length: 12, prefix: "Ticket_" }
+
+    - name: "llc"
+      type: "string_random"
+      options: { length: 15, prefix: "LLC " }
+
+    - name: "re"
+      type: "string_random"
+      options: { length: 15, prefix: "Re: " }
+
+    - name: "note"
+      type: "string_random"
+      options: { length: 20, prefix: "Note_" }
+
+    - name: "emp_code"
+      type: "string_random"
+      options: { length: 8, prefix: "EMP_" }
+
+    - name: "pers_code"
+      type: "string_random"
+      options: { length: 8, prefix: "PERS_" }
+
+    - name: "file_name"
+      type: "string_random"
+      options: { length: 8, prefix: "file_" }
+
 rules:
     tables:
-        # Module: "abtest"
-        - name: "b_abtest"
-          action: "truncate"
+        # ============================================================
+        # СИСТЕМНЫЕ ТАБЛИЦЫ
+        # ============================================================
 
-        # Module: "advertising"
-        - name: "b_adv_banner"
-          action: "update"
-          fields:
-              - column: "NAME"
-                strategy: "string_random"
-                options: { length: 10, prefix: "adv_" }
-              - column: "IMAGE_ALT"
-                strategy: "string_random"
-                options: { length: 10, prefix: "adv_" }
-        - name: "b_adv_contract"
-          action: "update"
-          fields:
-              - column: "NAME"
-                strategy: "string_random"
-                options: { length: 10, prefix: "Contract " }
-              - column: "DESCRIPTION"
-                strategy: "string_random"
-                options: { length: 30 }
-
-        # Module: "search"
+        # Поисковые индексы (безопасно удалить, перестроятся)
         - name: "b_search_content"
           action: "truncate"
-        - name: "b_search_content_freq"
-          action: "truncate"
-        - name: "b_search_content_param"
-          action: "truncate"
-        - name: "b_search_content_right"
-          action: "truncate"
-        - name: "b_search_content_site"
-          action: "truncate"
-        - name: "b_search_content_stem"
-          action: "truncate"
-        - name: "b_search_content_text"
-          action: "truncate"
-        - name: "b_search_content_title"
-          action: "truncate"
-        - name: "b_search_custom_rank"
-          action: "truncate"
-        - name: "b_search_phrase"
-          action: "truncate"
-        - name: "b_search_stem"
-          action: "truncate"
-        - name: "b_search_suggest"
-          action: "truncate"
-        - name: "b_search_tags"
-          action: "truncate"
-        - name: "b_search_user_right"
-          action: "truncate"
+          comment: "Поисковый индекс"
 
-        # Module: "statistics"
-        - name: "b_stat_adv"
-          action: "truncate"
-        - name: "b_stat_adv_day"
-          action: "truncate"
-        - name: "b_stat_adv_event"
-          action: "truncate"
-        - name: "b_stat_adv_event_day"
-          action: "truncate"
-        - name: "b_stat_adv_guest"
-          action: "truncate"
-        - name: "b_stat_adv_page"
-          action: "truncate"
-        - name: "b_stat_adv_searcher"
-          action: "truncate"
-        - name: "b_stat_browser"
-          action: "truncate"
-        - name: "b_stat_city"
-          action: "truncate"
-        - name: "b_stat_city_day"
-          action: "truncate"
-        - name: "b_stat_city_ip"
-          action: "truncate"
-        - name: "b_stat_country"
-          action: "truncate"
-        - name: "b_stat_country_day"
-          action: "truncate"
-        - name: "b_stat_day"
-          action: "truncate"
-        - name: "b_stat_day_site"
-          action: "truncate"
-        - name: "b_stat_ddl"
-          action: "truncate"
-        - name: "b_stat_event"
-          action: "truncate"
-        - name: "b_stat_event_day"
-          action: "truncate"
-        - name: "b_stat_event_list"
-          action: "truncate"
-        - name: "b_stat_guest"
-          action: "truncate"
-        - name: "b_stat_hit"
-          action: "truncate"
-        - name: "b_stat_page"
-          action: "truncate"
-        - name: "b_stat_page_adv"
-          action: "truncate"
-        - name: "b_stat_path"
-          action: "truncate"
-        - name: "b_stat_path_adv"
-          action: "truncate"
-        - name: "b_stat_path_cache"
-          action: "truncate"
-        - name: "b_stat_phrase_list"
-          action: "truncate"
-        - name: "b_stat_referer"
-          action: "truncate"
-        - name: "b_stat_referer_list"
-          action: "truncate"
-        - name: "b_stat_searcher"
-          action: "truncate"
-        - name: "b_stat_searcher_day"
-          action: "truncate"
-        - name: "b_stat_searcher_hit"
-          action: "truncate"
-        - name: "b_stat_searcher_params"
-          action: "truncate"
-        - name: "b_stat_session"
-          action: "truncate"
-        - name: "b_stat_session_data"
-          action: "truncate"
+        # События (почтовые уведомления содержат PII)
+        - name: "b_event"
+          action: "update"
+          fields:
+              - column: "C_FIELDS"
+                strategy: "empty"
 
-        # XML tree
-        - name: "b_xml_tree"
-          action: "truncate"
-        - name: "b_event_log"
-          action: "truncate"
+        # ============================================================
+        # ПОЛЬЗОВАТЕЛИ
+        # ============================================================
 
-        # 2. User & Authentication Tables
         - name: "b_user"
           action: "update"
           fields:
               - column: "EMAIL"
                 strategy: "email_fake"
+                salt_source: "primary"
               - column: "LOGIN"
-                strategy: "string_random"
-                options: { length: 10, prefix: "user_" }
+                strategy: "user_login"
+                salt_source: "primary"
               - column: "NAME"
                 strategy: "name_fake"
+                salt_source: "primary"
               - column: "LAST_NAME"
                 strategy: "lastname_fake"
+                salt_source: "primary"
               - column: "SECOND_NAME"
-                strategy: "middlename_fake"
+                strategy: "name_fake"
+                salt_source: "primary"
               - column: "PERSONAL_PHONE"
                 strategy: "phone_fake"
+                salt_source: "primary"
               - column: "PERSONAL_MOBILE"
                 strategy: "phone_fake"
+                salt_source: "primary"
               - column: "PERSONAL_FAX"
                 strategy: "phone_fake"
+                salt_source: "primary"
               - column: "PERSONAL_STREET"
-                strategy: "address_fake"
+                strategy: "str_15"
+                salt_source: "primary"
               - column: "PERSONAL_CITY"
-                strategy: "city_fake"
+                strategy: "str_8"
+                salt_source: "primary"
               - column: "PERSONAL_STATE"
-                strategy: "string_random"
-                options: { length: 20 }
+                strategy: "str_8"
+                salt_source: "primary"
               - column: "PERSONAL_ZIP"
-                strategy: "string_random"
-                options: { length: 6, numeric: true }
-              - column: "PERSONAL_COUNTRY"
-                strategy: "country_fake"
+                strategy: "str_6"
+                salt_source: "primary"
+              - column: "PERSONAL_NOTES"
+                strategy: "empty"
               - column: "WORK_COMPANY"
-                strategy: "company_fake"
+                strategy: "company"
+                salt_source: "primary"
               - column: "WORK_DEPARTMENT"
-                strategy: "string_random"
-                options: { length: 20 }
+                strategy: "dept"
+                salt_source: "primary"
               - column: "WORK_POSITION"
-                strategy: "string_random"
-                options: { length: 20 }
+                strategy: "str_10"
+                salt_source: "primary"
               - column: "WORK_PHONE"
                 strategy: "phone_fake"
+                salt_source: "primary"
               - column: "WORK_FAX"
                 strategy: "phone_fake"
+                salt_source: "primary"
               - column: "WORK_STREET"
-                strategy: "address_fake"
+                strategy: "str_15"
+                salt_source: "primary"
               - column: "WORK_CITY"
-                strategy: "city_fake"
-              - column: "WORK_STATE"
-                strategy: "string_random"
-                options: { length: 20 }
-              - column: "WORK_ZIP"
-                strategy: "string_random"
-                options: { length: 6, numeric: true }
-              - column: "WORK_COUNTRY"
-                strategy: "country_fake"
+                strategy: "str_8"
+                salt_source: "primary"
+              - column: "WORK_NOTES"
+                strategy: "empty"
               - column: "ADMIN_NOTES"
                 strategy: "empty"
+              - column: "PERSONAL_WWW"
+                strategy: "www"
+                salt_source: "primary"
+              - column: "WORK_WWW"
+                strategy: "www"
+                salt_source: "primary"
+              - column: "STORED_HASH"
+                strategy: "empty"
+              - column: "CHECKWORD"
+                strategy: "empty"
+              - column: "CONFIRM_CODE"
+                strategy: "empty"
+              - column: "PERSONAL_BIRTHDATE"
+                strategy: "empty"
+              - column: "PERSONAL_BIRTHDAY"
+                strategy: "empty"
+              - column: "PERSONAL_GENDER"
+                strategy: "empty"
+              - column: "PERSONAL_COUNTRY"
+                strategy: "str_8"
+                salt_source: "primary"
+              - column: "PERSONAL_ICQ"
+                strategy: "str_8"
+                salt_source: "primary"
+              - column: "WORK_PROFILE"
+                strategy: "empty"
+              - column: "PERSONAL_PAGER"
+                strategy: "str_8"
+                salt_source: "primary"
+              - column: "WORK_PAGER"
+                strategy: "str_8"
+                salt_source: "primary"
           where: "ID NOT IN (1)"
-        - name: "b_user_phone_auth"
-          action: "truncate"
-        - name: "b_user_hit_auth"
-          action: "truncate"
 
-        # 3. CRM Tables
+        # Пароли приложений
+        - name: "b_app_password"
+          action: "update"
+          fields:
+              - column: "PASSWORD"
+                strategy: "empty"
+              - column: "DIGEST_PASSWORD"
+                strategy: "empty"
+              - column: "LAST_IP"
+                strategy: "ip_private"
+                salt_source: "primary"
+
+        # ============================================================
+        # CRM
+        # ============================================================
+
+        # Сделки
+        - name: "b_crm_deal"
+          action: "update"
+          fields:
+              - column: "TITLE"
+                strategy: "deal"
+                salt_source: "primary"
+              - column: "COMMENTS"
+                strategy: "empty"
+              - column: "SOURCE_DESCRIPTION"
+                strategy: "empty"
+              - column: "ADDITIONAL_INFO"
+                strategy: "empty"
+
+        # Лиды
+        - name: "b_crm_lead"
+          action: "update"
+          fields:
+              - column: "NAME"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "LAST_NAME"
+                strategy: "lastname_fake"
+                salt_source: "primary"
+              - column: "SECOND_NAME"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "FULL_NAME"
+                strategy: "str_15"
+                salt_source: "primary"
+              - column: "TITLE"
+                strategy: "lead"
+                salt_source: "primary"
+              - column: "POST"
+                strategy: "str_10"
+                salt_source: "primary"
+              - column: "ADDRESS"
+                strategy: "str_15"
+                salt_source: "primary"
+              - column: "COMMENTS"
+                strategy: "empty"
+              - column: "SOURCE_DESCRIPTION"
+                strategy: "empty"
+              - column: "COMPANY_TITLE"
+                strategy: "company"
+                salt_source: "primary"
+              - column: "BIRTHDATE"
+                strategy: "empty"
+              - column: "SEARCH_CONTENT"
+                strategy: "empty"
+
+        # Контакты
         - name: "b_crm_contact"
           action: "update"
           fields:
               - column: "NAME"
                 strategy: "name_fake"
+                salt_source: "primary"
               - column: "LAST_NAME"
                 strategy: "lastname_fake"
+                salt_source: "primary"
               - column: "SECOND_NAME"
-                strategy: "middlename_fake"
-              - column: "FULL_NAME"
                 strategy: "name_fake"
+                salt_source: "primary"
+              - column: "FULL_NAME"
+                strategy: "str_15"
+                salt_source: "primary"
+              - column: "POST"
+                strategy: "str_10"
+                salt_source: "primary"
               - column: "ADDRESS"
-                strategy: "address_fake"
+                strategy: "str_15"
+                salt_source: "primary"
               - column: "COMMENTS"
-                strategy: "string_random"
-                options: { length: 100 }
+                strategy: "empty"
+              - column: "SOURCE_DESCRIPTION"
+                strategy: "empty"
+              - column: "BIRTHDATE"
+                strategy: "empty"
+              - column: "SEARCH_CONTENT"
+                strategy: "empty"
 
+        # Компании
         - name: "b_crm_company"
           action: "update"
           fields:
               - column: "TITLE"
-                strategy: "company_fake"
+                strategy: "company"
+                salt_source: "primary"
               - column: "ADDRESS"
-                strategy: "address_fake"
+                strategy: "str_15"
+                salt_source: "primary"
               - column: "ADDRESS_LEGAL"
-                strategy: "address_fake"
+                strategy: "str_15"
+                salt_source: "primary"
               - column: "BANKING_DETAILS"
-                strategy: "string_random"
-                options: { length: 100 }
+                strategy: "empty"
               - column: "COMMENTS"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        - name: "b_crm_invoice"
-          action: "update"
-          fields:
-              - column: "USER_DESCRIPTION"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "ADDITIONAL_INFO"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "COMMENTS"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "ORDER_TOPIC"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "TRACKING_NUMBER"
-                strategy: "string_random"
-                options: { length: 20 }
-
-
-        # Group: CRM Deal titles
-        - name: "b_crm_deal"
-          fields:
+                strategy: "empty"
+              - column: "REVENUE"
+                strategy: "str_6"
+                salt_source: "primary"
+              - column: "SOURCE_DESCRIPTION"
+                strategy: "empty"
               - column: "SEARCH_CONTENT"
                 strategy: "empty"
 
-        # 7. Sale & Order Tables
-        - name: "b_sale_order"
+        # Котировки
+        - name: "b_crm_quote"
           action: "update"
           fields:
-              - column: "USER_DESCRIPTION"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "ADDITIONAL_INFO"
-                strategy: "string_random"
-                options: { length: 100 }
+              - column: "TITLE"
+                strategy: "quote"
+                salt_source: "primary"
               - column: "COMMENTS"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "ORDER_TOPIC"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "TRACKING_NUMBER"
-                strategy: "string_random"
-                options: { length: 20 }
-
-        # 8. Blog Tables
-        - name: "b_blog_post"
-          action: "update"
-          fields:
-              - column: "TITLE"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "PREVIEW_TEXT"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "DETAIL_TEXT"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "KEYWORDS"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "SEO_TITLE"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "SEO_TAGS"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "SEO_DESCRIPTION"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        - name: "b_blog_comment"
-          action: "update"
-          fields:
-              - column: "AUTHOR_NAME"
+                strategy: "empty"
+              - column: "CONTENT"
+                strategy: "empty"
+              - column: "TERMS"
+                strategy: "empty"
+              - column: "CLIENT_TITLE"
+                strategy: "client"
+                salt_source: "primary"
+              - column: "CLIENT_ADDR"
+                strategy: "str_15"
+                salt_source: "primary"
+              - column: "CLIENT_CONTACT"
                 strategy: "name_fake"
-              - column: "AUTHOR_EMAIL"
+                salt_source: "primary"
+              - column: "CLIENT_EMAIL"
                 strategy: "email_fake"
-              - column: "POST_MESSAGE"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        - name: "b_blog_trackback"
-          action: "update"
-          fields:
-              - column: "URL"
-                strategy: "url_fake"
-              - column: "TITLE"
-                strategy: "string_random"
-                options: { length: 50 }
-
-        # 9. Forum Tables
-        - name: "b_forum_message"
-          action: "update"
-          fields:
-              - column: "POST_MESSAGE"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "POST_MESSAGE_HTML"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "AUTHOR_NAME"
-                strategy: "name_fake"
-              - column: "AUTHOR_EMAIL"
-                strategy: "email_fake"
-              - column: "AUTHOR_IP"
-                strategy: "ip_fake"
-              - column: "AUTHOR_REAL_IP"
-                strategy: "ip_fake"
-              - column: "EDIT_REASON"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "MAIL_HEADER"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "SERVICE_DATA"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        # 10. Social Network (Sonet) Tables
-        - name: "b_sonet_log"
-          action: "update"
-          fields:
-              - column: "TITLE"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "MESSAGE"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "TEXT_MESSAGE"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "URL"
-                strategy: "url_fake"
-              - column: "PARAMS"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        # 11. Task Tables
-        - name: "b_tasks"
-          action: "update"
-          fields:
-              - column: "TITLE"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "DESCRIPTION"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "DECLINE_REASON"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        # 12. AI Tables
-        - name: "b_ai_history"
-          action: "update"
-          fields:
-              - column: "REQUEST_TEXT"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "RESULT_TEXT"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "CONTEXT"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        - name: "b_ai_prompt"
-          action: "update"
-          fields:
-              - column: "PROMPT"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "TEXT_TRANSLATES"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        # 13. CRM Timeline Notes
-        - name: "b_crm_timeline_note"
-          action: "update"
-          fields:
-              - column: "TEXT"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        # 14. Phone Tracking
-        - name: "b_crm_tracking_phone_number"
-          action: "update"
-          fields:
-              - column: "VALUE"
+                salt_source: "primary"
+              - column: "CLIENT_PHONE"
                 strategy: "phone_fake"
+                salt_source: "primary"
 
-        # 15. Forum Email
-        - name: "b_forum_email"
-          action: "update"
-          fields:
-              - column: "EMAIL"
-                strategy: "email_fake"
-              - column: "EMAIL_GROUP"
-                strategy: "email_fake"
-              - column: "URL_TEMPLATES_MESSAGE"
-                strategy: "url_fake"
-
-        # 16. Calendar Events
-        - name: "b_calendar_event"
-          action: "update"
-          fields:
-              - column: "NAME"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "DESCRIPTION"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "LOCATION"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "MEETING"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "REMIND"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "SEARCHABLE_CONTENT"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        # 17. Mail Messages
-        - name: "b_mail_message"
-          action: "update"
-          fields:
-              - column: "FULL_TEXT"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "HEADER"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "FIELD_FROM"
-                strategy: "email_fake"
-              - column: "FIELD_REPLY_TO"
-                strategy: "email_fake"
-              - column: "FIELD_TO"
-                strategy: "email_fake"
-              - column: "FIELD_CC"
-                strategy: "email_fake"
-              - column: "FIELD_BCC"
-                strategy: "email_fake"
-              - column: "SUBJECT"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "BODY"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "BODY_HTML"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "SEARCH_CONTENT"
-                strategy: "empty"
-                options: { length: 100 }
-              - column: "SPAM_WORDS"
-                strategy: "string_random"
-                options: { length: 50 }
-
-        # 18. IM Messages
-        - name: "b_im_message"
-          action: "update"
-          fields:
-              - column: "MESSAGE"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "MESSAGE_OUT"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "EMAIL_TEMPLATE"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "NOTIFY_TITLE"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "NOTIFY_BUTTONS"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        # 19. Sonet Private Messages
-        - name: "b_sonet_messages"
-          action: "update"
-          fields:
-              - column: "TITLE"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "MESSAGE"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "EMAIL_TEMPLATE"
-                strategy: "string_random"
-                options: { length: 50 }
-
-        # 20. Document Generator
-        - name: "b_documentgenerator_document"
-          action: "update"
-          fields:
-              - column: "TITLE"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "NUMBER"
-                strategy: "string_random"
-                options: { length: 20 }
-              - column: "VALUE"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "VALUES"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        # 21. Sale Order Properties
-        - name: "b_sale_order_props_value"
-          action: "update"
-          fields:
-              - column: "NAME"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "VALUE"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        # 22. App Passwords
-        - name: "b_app_password"
-          action: "update"
-          fields:
-              - column: "LAST_IP"
-                strategy: "ip_fake"
-              - column: "COMMENT"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "SYSCOMMENT"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "CODE"
-                strategy: "string_random"
-                options: { length: 50 }
-
-        # 23. Location Addresses
-        - name: "b_location_address"
-          action: "update"
-          fields:
-              - column: "LATITUDE"
-                strategy: "string_random"
-                options: { length: 10, numeric: true }
-              - column: "LONGITUDE"
-                strategy: "string_random"
-                options: { length: 10, numeric: true }
-
-        # 24. Booking Notes
-        - name: "b_booking_booking_note"
-          action: "update"
-          fields:
-              - column: "DESCRIPTION"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        # 25. Mail OAuth (Tokens and Secrets)
-        - name: "b_mail_oauth"
-          action: "update"
-          fields:
-              - column: "TOKEN"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "REFRESH_TOKEN"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "SECRET"
-                strategy: "string_random"
-                options: { length: 50 }
-
-        # 26. CRM Activities
+        # Активности
         - name: "b_crm_act"
           action: "update"
           fields:
               - column: "SUBJECT"
-                strategy: "string_random"
-                options: { length: 50 }
+                strategy: "activity"
+                salt_source: "primary"
               - column: "DESCRIPTION"
-                strategy: "string_random"
-                options: { length: 100 }
+                strategy: "empty"
               - column: "LOCATION"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "SETTINGS"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "URN"
-                strategy: "string_random"
-                options: { length: 50 }
+                strategy: "str_10"
+                salt_source: "primary"
               - column: "PROVIDER_PARAMS"
-                strategy: "string_random"
-                options: { length: 100 }
+                strategy: "empty"
               - column: "PROVIDER_DATA"
-                strategy: "string_random"
-                options: { length: 100 }
+                strategy: "empty"
               - column: "SEARCH_CONTENT"
-                strategy: "emtpy"
-        # 27. CRM Addresses
-        - name: "b_crm_addr"
+                strategy: "empty"
+
+        # Связь активностей
+        - name: "b_crm_act_comm"
           action: "update"
           fields:
-              - column: "ADDRESS_1"
-                strategy: "address_fake"
-              - column: "ADDRESS_2"
-                strategy: "address_fake"
-              - column: "CITY"
-                strategy: "city_fake"
-              - column: "POSTAL_CODE"
-                strategy: "string_random"
-                options: { length: 6, numeric: true }
-              - column: "REGION"
-                strategy: "string_random"
-                options: { length: 20 }
-              - column: "PROVINCE"
-                strategy: "string_random"
-                options: { length: 20 }
-              - column: "COUNTRY"
-                strategy: "country_fake"
-              - column: "COUNTRY_CODE"
-                strategy: "string_random"
-                options: { length: 2 }
+              - column: "VALUE"
+                strategy: "str_10"
+                salt_source: "primary"
 
-        # 28. CRM Requisites (Highly sensitive - tax IDs, documents, personal data)
+        # Тела писем активностей
+        - name: "b_crm_act_mail_body"
+          action: "update"
+          fields:
+              - column: "BODY"
+                strategy: "empty"
+
+        # Метаданные писем активностей
+        - name: "b_crm_act_mail_meta"
+          action: "update"
+          fields:
+              - column: "FROM"
+                strategy: "email_fake"
+                salt_source: "primary"
+              - column: "TO"
+                strategy: "email_fake"
+                salt_source: "primary"
+              - column: "CC"
+                strategy: "email_fake"
+                salt_source: "primary"
+              - column: "BCC"
+                strategy: "email_fake"
+                salt_source: "primary"
+              - column: "SUBJECT"
+                strategy: "re"
+                salt_source: "primary"
+              - column: "MSG_ID_HASH"
+                strategy: "empty"
+              - column: "MSG_INREPLY_HASH"
+                strategy: "empty"
+              - column: "MSG_HEADER_HASH"
+                strategy: "empty"
+
+        # Реквизиты
         - name: "b_crm_requisite"
           action: "update"
           fields:
               - column: "NAME"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "CODE"
-                strategy: "string_random"
-                options: { length: 20 }
-              - column: "XML_ID"
-                strategy: "string_random"
-                options: { length: 20 }
-              - column: "ORIGINATOR_ID"
-                strategy: "string_random"
-                options: { length: 50 }
+                strategy: "req"
+                salt_source: "primary"
               - column: "RQ_NAME"
-                strategy: "name_fake"
+                strategy: "str_10"
+                salt_source: "primary"
               - column: "RQ_FIRST_NAME"
                 strategy: "name_fake"
+                salt_source: "primary"
               - column: "RQ_LAST_NAME"
                 strategy: "lastname_fake"
+                salt_source: "primary"
               - column: "RQ_SECOND_NAME"
-                strategy: "middlename_fake"
-              - column: "RQ_COMPANY_ID"
-                strategy: "string_random"
-                options: { length: 20 }
+                strategy: "name_fake"
+                salt_source: "primary"
               - column: "RQ_COMPANY_NAME"
-                strategy: "company_fake"
+                strategy: "company"
+                salt_source: "primary"
               - column: "RQ_COMPANY_FULL_NAME"
-                strategy: "company_fake"
-              - column: "RQ_COMPANY_REG_DATE"
-                strategy: "string_random"
-                options: { length: 10 }
+                strategy: "llc"
+                salt_source: "primary"
               - column: "RQ_DIRECTOR"
                 strategy: "name_fake"
+                salt_source: "primary"
               - column: "RQ_ACCOUNTANT"
                 strategy: "name_fake"
+                salt_source: "primary"
               - column: "RQ_CEO_NAME"
                 strategy: "name_fake"
-              - column: "RQ_CEO_WORK_POS"
-                strategy: "string_random"
-                options: { length: 30 }
+                salt_source: "primary"
               - column: "RQ_CONTACT"
                 strategy: "name_fake"
+                salt_source: "primary"
               - column: "RQ_EMAIL"
                 strategy: "email_fake"
+                salt_source: "primary"
               - column: "RQ_PHONE"
                 strategy: "phone_fake"
+                salt_source: "primary"
               - column: "RQ_FAX"
                 strategy: "phone_fake"
-              - column: "RQ_IDENT_DOC"
-                strategy: "string_random"
-                options: { length: 50 }
+                salt_source: "primary"
               - column: "RQ_IDENT_DOC_SER"
-                strategy: "string_random"
-                options: { length: 10 }
+                strategy: "str_4"
+                salt_source: "primary"
               - column: "RQ_IDENT_DOC_NUM"
-                strategy: "string_random"
-                options: { length: 10 }
+                strategy: "str_6"
+                salt_source: "primary"
               - column: "RQ_IDENT_DOC_PERS_NUM"
-                strategy: "string_random"
-                options: { length: 20 }
-              - column: "RQ_IDENT_DOC_DATE"
-                strategy: "string_random"
-                options: { length: 10 }
+                strategy: "str_12"
+                salt_source: "primary"
               - column: "RQ_IDENT_DOC_ISSUED_BY"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "RQ_IDENT_DOC_DEP_CODE"
-                strategy: "string_random"
-                options: { length: 10 }
+                strategy: "str_15"
+                salt_source: "primary"
               - column: "RQ_INN"
-                strategy: "string_random"
-                options: { length: 12, numeric: true }
+                strategy: "str_10"
+                salt_source: "primary"
               - column: "RQ_KPP"
-                strategy: "string_random"
-                options: { length: 9, numeric: true }
-              - column: "RQ_USRLE"
-                strategy: "string_random"
-                options: { length: 20 }
-              - column: "RQ_IFNS"
-                strategy: "string_random"
-                options: { length: 50 }
+                strategy: "str_9"
+                salt_source: "primary"
               - column: "RQ_OGRN"
-                strategy: "string_random"
-                options: { length: 13, numeric: true }
+                strategy: "str_13"
+                salt_source: "primary"
               - column: "RQ_OGRNIP"
-                strategy: "string_random"
-                options: { length: 15, numeric: true }
+                strategy: "str_15"
+                salt_source: "primary"
               - column: "RQ_OKPO"
-                strategy: "string_random"
-                options: { length: 12, numeric: true }
-              - column: "RQ_OKTMO"
-                strategy: "string_random"
-                options: { length: 11, numeric: true }
+                strategy: "str_10"
+                salt_source: "primary"
               - column: "RQ_OKVED"
-                strategy: "string_random"
-                options: { length: 20 }
+                strategy: "str_8"
+                salt_source: "primary"
               - column: "RQ_EDRPOU"
-                strategy: "string_random"
-                options: { length: 10, numeric: true }
+                strategy: "str_8"
+                salt_source: "primary"
               - column: "RQ_DRFO"
-                strategy: "string_random"
-                options: { length: 10, numeric: true }
-              - column: "RQ_KBE"
-                strategy: "string_random"
-                options: { length: 2 }
+                strategy: "str_10"
+                salt_source: "primary"
               - column: "RQ_IIN"
-                strategy: "string_random"
-                options: { length: 12, numeric: true }
+                strategy: "str_12"
+                salt_source: "primary"
               - column: "RQ_BIN"
-                strategy: "string_random"
-                options: { length: 12, numeric: true }
-              - column: "RQ_ST_CERT_SER"
-                strategy: "string_random"
-                options: { length: 10 }
-              - column: "RQ_ST_CERT_NUM"
-                strategy: "string_random"
-                options: { length: 15 }
-              - column: "RQ_ST_CERT_DATE"
-                strategy: "string_random"
-                options: { length: 10 }
-              - column: "RQ_VAT_ID"
-                strategy: "string_random"
-                options: { length: 20 }
-              - column: "RQ_VAT_CERT_SER"
-                strategy: "string_random"
-                options: { length: 10 }
-              - column: "RQ_VAT_CERT_NUM"
-                strategy: "string_random"
-                options: { length: 15 }
-              - column: "RQ_VAT_CERT_DATE"
-                strategy: "string_random"
-                options: { length: 10 }
-              - column: "RQ_RESIDENCE_COUNTRY"
-                strategy: "country_fake"
-              - column: "RQ_BASE_DOC"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "RQ_REGON"
-                strategy: "string_random"
-                options: { length: 9, numeric: true }
-              - column: "RQ_KRS"
-                strategy: "string_random"
-                options: { length: 10, numeric: true }
-              - column: "RQ_PESEL"
-                strategy: "string_random"
-                options: { length: 11, numeric: true }
-              - column: "RQ_LEGAL_FORM"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "RQ_SIRET"
-                strategy: "string_random"
-                options: { length: 20, numeric: true }
-              - column: "RQ_SIREN"
-                strategy: "string_random"
-                options: { length: 15, numeric: true }
-              - column: "RQ_CAPITAL"
-                strategy: "string_random"
-                options: { length: 20 }
-              - column: "RQ_RCS"
-                strategy: "string_random"
-                options: { length: 20 }
-              - column: "RQ_CNPJ"
-                strategy: "string_random"
-                options: { length: 20, numeric: true }
-              - column: "RQ_STATE_REG"
-                strategy: "string_random"
-                options: { length: 25 }
-              - column: "RQ_MNPL_REG"
-                strategy: "string_random"
-                options: { length: 20 }
-              - column: "RQ_CPF"
-                strategy: "string_random"
-                options: { length: 20, numeric: true }
-              - column: "RQ_IDENT_TYPE"
-                strategy: "string_random"
-                options: { length: 30 }
+                strategy: "str_12"
+                salt_source: "primary"
 
-        # 29. CRM Leads
-        - name: "b_crm_lead"
+        # Банковские реквизиты
+        - name: "b_crm_bank_detail"
           action: "update"
           fields:
-              - column: "STATUS_DESCRIPTION"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "SOURCE_DESCRIPTION"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "TITLE"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "FULL_NAME"
-                strategy: "name_fake"
-              - column: "NAME"
-                strategy: "name_fake"
-              - column: "LAST_NAME"
-                strategy: "lastname_fake"
-              - column: "SECOND_NAME"
-                strategy: "middlename_fake"
-              - column: "COMPANY_TITLE"
-                strategy: "company_fake"
-              - column: "POST"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "ADDRESS"
-                strategy: "address_fake"
+              - column: "RQ_BANK_NAME"
+                strategy: "bank"
+                salt_source: "primary"
+              - column: "RQ_BANK_ADDR"
+                strategy: "str_15"
+                salt_source: "primary"
+              - column: "RQ_BANK_ROUTE_NUM"
+                strategy: "str_9"
+                salt_source: "primary"
+              - column: "RQ_BIK"
+                strategy: "str_9"
+                salt_source: "primary"
+              - column: "RQ_MFO"
+                strategy: "str_6"
+                salt_source: "primary"
+              - column: "RQ_ACC_NAME"
+                strategy: "str_10"
+                salt_source: "primary"
+              - column: "RQ_ACC_NUM"
+                strategy: "str_20"
+                salt_source: "primary"
+              - column: "RQ_IIK"
+                strategy: "str_20"
+                salt_source: "primary"
+              - column: "RQ_COR_ACC_NUM"
+                strategy: "str_20"
+                salt_source: "primary"
+              - column: "RQ_IBAN"
+                strategy: "str_20"
+                salt_source: "primary"
+              - column: "RQ_SWIFT"
+                strategy: "str_11"
+                salt_source: "primary"
+              - column: "RQ_BIC"
+                strategy: "str_11"
+                salt_source: "primary"
+              - column: "RQ_CODEB"
+                strategy: "str_5"
+                salt_source: "primary"
+              - column: "RQ_CODEG"
+                strategy: "str_5"
+                salt_source: "primary"
               - column: "COMMENTS"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "ORIGINATOR_ID"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "ORIGIN_ID"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "HONORIFIC"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "SEARCH_CONTENT"
                 strategy: "empty"
-        # 30. CRM Timeline
+              - column: "RQ_BANK_CODE"
+                strategy: "str_10"
+                salt_source: "primary"
+              - column: "RQ_AGENCY_NAME"
+                strategy: "str_10"
+                salt_source: "primary"
+
+        # Заметки таймлайна
+        - name: "b_crm_timeline_note"
+          action: "update"
+          fields:
+              - column: "TEXT"
+                strategy: "note"
+                salt_source: "primary"
+
+        # Таймлайн
         - name: "b_crm_timeline"
           action: "update"
           fields:
               - column: "COMMENT"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "SETTINGS"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "SOURCE_ID"
-                strategy: "string_random"
-                options: { length: 30 }
+                strategy: "empty"
 
-        # 31. CRM Webform Fields
-        - name: "b_crm_webform_field"
+        # Адреса CRM
+        - name: "b_crm_addr"
           action: "update"
           fields:
-              - column: "CODE"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "CAPTION"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "PLACEHOLDER"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "ITEMS"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "VALUE"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "SETTINGS_DATA"
-                strategy: "string_random"
-                options: { length: 100 }
+              - column: "ADDRESS_1"
+                strategy: "str_15"
+                salt_source: "primary"
+              - column: "ADDRESS_2"
+                strategy: "str_15"
+                salt_source: "primary"
+              - column: "CITY"
+                strategy: "str_8"
+                salt_source: "primary"
+              - column: "POSTAL_CODE"
+                strategy: "str_6"
+                salt_source: "primary"
+              - column: "REGION"
+                strategy: "str_8"
+                salt_source: "primary"
+              - column: "PROVINCE"
+                strategy: "str_8"
+                salt_source: "primary"
 
-        # 32. Sale Basket Properties
-        - name: "b_sale_basket_props"
+        # События CRM
+        - name: "b_crm_event"
           action: "update"
           fields:
-              - column: "NAME"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "VALUE"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "CODE"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "XML_ID"
-                strategy: "string_random"
-                options: { length: 30 }
-
-        # 33. Sender Contacts (Email marketing)
-        - name: "b_sender_contact"
-          action: "update"
-          fields:
-              - column: "CODE"
-                strategy: "email_fake"
-              - column: "NAME"
-                strategy: "name_fake"
-              - column: "IP"
-                strategy: "ip_fake"
-
-        # 34. Landing Pages
-        - name: "b_landing"
-          action: "update"
-          fields:
-              - column: "CODE"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "INITIATOR_APP_CODE"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "RULE"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "TITLE"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "XML_ID"
-                strategy: "string_random"
-                options: { length: 30 }
               - column: "DESCRIPTION"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "TPL_CODE"
-                strategy: "string_random"
-                options: { length: 30 }
+                strategy: "empty"
+              - column: "SETTINGS"
+                strategy: "empty"
+              - column: "EVENT_TEXT_1"
+                strategy: "empty"
+              - column: "EVENT_TEXT_2"
+                strategy: "empty"
+
+        # Инвойсы CRM
+        - name: "b_crm_invoice"
+          action: "update"
+          fields:
+              - column: "USER_DESCRIPTION"
+                strategy: "empty"
+              - column: "COMMENTS"
+                strategy: "empty"
+              - column: "PS_STATUS_DESCRIPTION"
+                strategy: "empty"
+              - column: "PS_STATUS_MESSAGE"
+                strategy: "empty"
               - column: "SEARCH_CONTENT"
                 strategy: "empty"
 
-        # 35. HR Persons
-        - name: "b_hr_hcmlink_person"
+        # Свойства корзины инвойсов
+        - name: "b_crm_invoice_basket_props"
           action: "update"
           fields:
-              - column: "CODE"
-                strategy: "string_random"
-                options: { length: 30 }
+              - column: "NAME"
+                strategy: "str_10"
+                salt_source: "primary"
+              - column: "VALUE"
+                strategy: "str_10"
+                salt_source: "primary"
+
+        # Значения свойств инвойсов
+        - name: "b_crm_invoice_props_value"
+          action: "update"
+          fields:
+              - column: "NAME"
+                strategy: "str_10"
+                salt_source: "primary"
+              - column: "VALUE"
+                strategy: "str_10"
+                salt_source: "primary"
+
+        # Смарт-процесс 31
+        - name: "b_crm_dynamic_items_31"
+          action: "update"
+          fields:
               - column: "TITLE"
+                strategy: "item"
+                salt_source: "primary"
+              - column: "COMMENTS"
+                strategy: "empty"
+              - column: "SOURCE_DESCRIPTION"
+                strategy: "empty"
+
+        # Смарт-процесс 36
+        - name: "b_crm_dynamic_items_36"
+          action: "update"
+          fields:
+              - column: "TITLE"
+                strategy: "item"
+                salt_source: "primary"
+              - column: "COMMENTS"
+                strategy: "empty"
+              - column: "SOURCE_DESCRIPTION"
+                strategy: "empty"
+
+        # Смарт-процесс 39
+        - name: "b_crm_dynamic_items_39"
+          action: "update"
+          fields:
+              - column: "TITLE"
+                strategy: "item"
+                salt_source: "primary"
+              - column: "COMMENTS"
+                strategy: "empty"
+              - column: "SOURCE_DESCRIPTION"
+                strategy: "empty"
+
+        # ============================================================
+        # ИНТЕРНЕТ-МАГАЗИН (b_sale)
+        # ============================================================
+
+        # Заказы
+        - name: "b_sale_order"
+          action: "update"
+          fields:
+              - column: "USER_DESCRIPTION"
+                strategy: "empty"
+              - column: "COMMENTS"
+                strategy: "empty"
+              - column: "SEARCH_CONTENT"
+                strategy: "empty"
+
+        # Значения свойств заказов (EAV — содержит email, телефоны, ФИО, адреса)
+        - name: "b_sale_order_props_value"
+          action: "update"
+          fields:
+              - column: "VALUE"
+                strategy: "empty"
+              - column: "NAME"
+                strategy: "empty"
+
+        # Сохранённые профили покупателей
+        - name: "b_sale_user_props_value"
+          action: "update"
+          fields:
+              - column: "VALUE"
+                strategy: "empty"
+              - column: "NAME"
+                strategy: "empty"
+
+        # Имена профилей покупателей
+        - name: "b_sale_user_props"
+          action: "update"
+          fields:
+              - column: "NAME"
                 strategy: "name_fake"
+                salt_source: "primary"
 
-        # 36. HR Person Index
-        - name: "b_hr_hcmlink_person_index"
+        # Банковские карты (КРИТИЧЕСКИ ВАЖНО)
+        - name: "b_sale_user_cards"
           action: "update"
           fields:
-              - column: "SEARCH_CONTENT"
+              - column: "CARD_NUM"
+                strategy: "empty"
+              - column: "CARD_CODE"
+                strategy: "empty"
+              - column: "CARD_EXP_MONTH"
+                strategy: "empty"
+              - column: "CARD_EXP_YEAR"
+                strategy: "empty"
+              - column: "DESCRIPTION"
                 strategy: "empty"
 
-        # 37. IM Open Lines Log
-        - name: "b_imopenlines_log"
+        # Платежи
+        - name: "b_sale_order_payment"
           action: "update"
           fields:
-              - column: "LINE_ID"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "CONNECTOR_ID"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "TYPE"
-                strategy: "string_random"
-                options: { length: 30 }
-              - column: "DATA"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "TRACE"
-                strategy: "string_random"
-                options: { length: 100 }
+              - column: "PS_CARD_NUMBER"
+                strategy: "empty"
+              - column: "PS_RECURRING_TOKEN"
+                strategy: "empty"
+              - column: "PS_INVOICE_ID"
+                strategy: "str_10"
+                salt_source: "primary"
+              - column: "PS_STATUS_DESCRIPTION"
+                strategy: "empty"
+              - column: "PS_STATUS_MESSAGE"
+                strategy: "empty"
+              - column: "COMMENTS"
+                strategy: "empty"
 
-        # 38. Landing Pages
-        - name: "b_landing_history"
-          action: "truncate"
-        - name: "b_landing_block"
+        # Компании магазина
+        - name: "b_sale_company"
           action: "update"
           fields:
-              - column: "CONTENT"
-                strategy: "empty"
-              - column: "SEARCH_CONTENT"
-                strategy: "empty"
+              - column: "NAME"
+                strategy: "company"
+                salt_source: "primary"
+              - column: "ADDRESS"
+                strategy: "str_15"
+                salt_source: "primary"
 
-        # 39. CRM Company Index
-        - name: "b_crm_company_index"
-          action: "truncate"
-        - name: "b_crm_contact_index"
-          action: "truncate"
-        - name: "b_crm_deal_index"
-          action: "truncate"
-        - name: "b_crm_dp_automatic_index"
-          action: "truncate"
-        - name: "b_crm_lead_index"
-          action: "truncate"
-        - name: "b_disk_object_head_index"
-          action: "truncate"
-
-        # 40. Sonet Index Tables
-        - name: "b_sonet_log_index"
+        # Доставка
+        - name: "b_sale_order_delivery"
           action: "update"
           fields:
-              - column: "CONTENT"
+              - column: "PARAMS"
+                strategy: "empty"
+              - column: "COMMENTS"
                 strategy: "empty"
 
-        # 41. IM Chat Index
+        # Требования доставки
+        - name: "b_sale_order_delivery_req"
+          action: "update"
+          fields:
+              - column: "PARAMS"
+                strategy: "empty"
+
+
+        # ============================================================
+        # МЕССЕНДЖЕР (b_im)
+        # ============================================================
+
+        # Сообщения
+        - name: "b_im_message"
+          action: "update"
+          fields:
+              - column: "MESSAGE"
+                strategy: "empty"
+              - column: "MESSAGE_OUT"
+                strategy: "empty"
+
+        # Чаты
+        - name: "b_im_chat"
+          action: "update"
+          fields:
+              - column: "TITLE"
+                strategy: "chat_title"
+                salt_source: "primary"
+              - column: "DESCRIPTION"
+                strategy: "empty"
+              - column: "CALL_NUMBER"
+                strategy: "phone_fake"
+                salt_source: "primary"
+              - column: "ENTITY_DATA_1"
+                strategy: "empty"
+              - column: "ENTITY_DATA_2"
+                strategy: "empty"
+              - column: "ENTITY_DATA_3"
+                strategy: "empty"
+
+        # Индекс чатов (денормализованный кэш PII)
         - name: "b_im_chat_index"
           action: "update"
           fields:
               - column: "SEARCH_CONTENT"
                 strategy: "empty"
+              - column: "SEARCH_TITLE"
+                strategy: "empty"
 
-        # 42. Tasks Search Index
-        - name: "b_tasks_search_index"
+        # Транскрипции аудио/видео
+        - name: "b_im_file_transcription"
           action: "update"
           fields:
+              - column: "TEXT"
+                strategy: "empty"
+
+
+        # Статусы пользователей
+        - name: "b_im_status"
+          action: "update"
+          fields:
+              - column: "STATUS_TEXT"
+                strategy: "str_10"
+                salt_source: "primary"
+
+
+        # ============================================================
+        # ОТКРЫТЫЕ ЛИНИИ (b_imopenlines)
+        # ============================================================
+
+        # Сессии открытых линий
+        - name: "b_imopenlines_session"
+          action: "update"
+          fields:
+              - column: "USER_CODE"
+                strategy: "str_10"
+                salt_source: "primary"
+              - column: "COMMENT_HEAD"
+                strategy: "empty"
+              - column: "CRM_TRACE_DATA"
+                strategy: "empty"
+              - column: "BLOCK_REASON"
+                strategy: "empty"
+              - column: "QUEUE_HISTORY"
+                strategy: "empty"
+
+        # Индекс чатов открытых линий
+        - name: "b_imopenlines_chat_index"
+          action: "update"
+          fields:
+              - column: "SEARCH_TITLE"
+                strategy: "empty"
+
+
+        # ============================================================
+        # СОЦИАЛЬНАЯ СЕТЬ (b_sonet)
+        # ============================================================
+
+        # Личные сообщения
+        - name: "b_sonet_messages"
+          action: "update"
+          fields:
+              - column: "TITLE"
+                strategy: "msg"
+                salt_source: "primary"
+              - column: "MESSAGE"
+                strategy: "empty"
+
+        # Лента активности
+        - name: "b_sonet_log"
+          action: "update"
+          fields:
+              - column: "TITLE"
+                strategy: "post"
+                salt_source: "primary"
+              - column: "MESSAGE"
+                strategy: "empty"
+              - column: "TEXT_MESSAGE"
+                strategy: "empty"
+              - column: "PARAMS"
+                strategy: "empty"
+
+        # Группы/сообщества
+        - name: "b_sonet_group"
+          action: "update"
+          fields:
+              - column: "NAME"
+                strategy: "group"
+                salt_source: "primary"
+              - column: "DESCRIPTION"
+                strategy: "empty"
+              - column: "KEYWORDS"
+                strategy: "empty"
+              - column: "SEARCH_INDEX"
+                strategy: "empty"
+
+        # Связи пользователей
+        - name: "b_sonet_user_relations"
+          action: "update"
+          fields:
+              - column: "MESSAGE"
+                strategy: "empty"
+
+
+        # ============================================================
+        # ПОЧТА (b_mail)
+        # ============================================================
+
+        # Письма (МАКСИМАЛЬНЫЙ РИСК)
+        - name: "b_mail_message"
+          action: "update"
+          fields:
+              - column: "FULL_TEXT"
+                strategy: "empty"
+              - column: "HEADER"
+                strategy: "empty"
+              - column: "FIELD_FROM"
+                strategy: "email_fake"
+                salt_source: "primary"
+              - column: "FIELD_REPLY_TO"
+                strategy: "email_fake"
+                salt_source: "primary"
+              - column: "FIELD_TO"
+                strategy: "email_fake"
+                salt_source: "primary"
+              - column: "FIELD_CC"
+                strategy: "email_fake"
+                salt_source: "primary"
+              - column: "FIELD_BCC"
+                strategy: "email_fake"
+                salt_source: "primary"
+              - column: "SUBJECT"
+                strategy: "re"
+                salt_source: "primary"
+              - column: "BODY"
+                strategy: "empty"
+              - column: "BODY_HTML"
+                strategy: "empty"
               - column: "SEARCH_CONTENT"
                 strategy: "empty"
 
-        # 43. Mail Tables
-        - name: "b_mail_log"
-          action: "truncate"
+        # Почтовые ящики (содержат пароли!)
+        - name: "b_mail_mailbox"
+          action: "update"
+          fields:
+              - column: "EMAIL"
+                strategy: "email_fake"
+                salt_source: "primary"
+              - column: "USERNAME"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "NAME"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "LOGIN"
+                strategy: "mail_login"
+                salt_source: "primary"
+              - column: "PASSWORD"
+                strategy: "str_16"
+                salt_source: "primary"
+
+        # Контакты почты
         - name: "b_mail_contact"
           action: "update"
           fields:
               - column: "EMAIL"
                 strategy: "email_fake"
-        - name: "b_mail_message"
+                salt_source: "primary"
+              - column: "NAME"
+                strategy: "name_fake"
+                salt_source: "primary"
+
+        # Подписи пользователей
+        - name: "b_mail_user_signature"
           action: "update"
           fields:
-              - column: "HEADER"
+              - column: "SIGNATURE"
                 strategy: "empty"
-              - column: "FIELD_FROM"
+              - column: "SENDER"
+                strategy: "name_fake"
+                salt_source: "primary"
+
+
+        # ============================================================
+        # ФОРУМ (b_forum)
+        # ============================================================
+
+        # Сообщения форума
+        - name: "b_forum_message"
+          action: "update"
+          fields:
+              - column: "POST_MESSAGE"
+                strategy: "empty"
+              - column: "POST_MESSAGE_HTML"
+                strategy: "empty"
+              - column: "POST_MESSAGE_FILTER"
+                strategy: "empty"
+              - column: "AUTHOR_NAME"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "AUTHOR_EMAIL"
                 strategy: "email_fake"
-              - column: "FIELD_TO"
+                salt_source: "primary"
+              - column: "AUTHOR_IP"
+                strategy: "ip_private"
+                salt_source: "primary"
+              - column: "AUTHOR_REAL_IP"
+                strategy: "ip_private"
+                salt_source: "primary"
+              - column: "EDITOR_NAME"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "EDITOR_EMAIL"
                 strategy: "email_fake"
-              - column: "FIELD_REPLY_TO"
+                salt_source: "primary"
+              - column: "EDIT_REASON"
                 strategy: "empty"
-              - column: "FIELD_BCC"
-                strategy: "empty"
-              - column: "SUBJECT"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "BODY"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "BODY_HTML"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "SEARCH_CONTENT"
+              - column: "SERVICE_DATA"
                 strategy: "empty"
 
-        # 44. CRM Dynamic - Contracts (Dogovor)
-        - name: "b_crm_dynamic_items_1036"
+        # Личные сообщения форума
+        - name: "b_forum_private_message"
+          action: "update"
+          fields:
+              - column: "POST_SUBJ"
+                strategy: "pm"
+                salt_source: "primary"
+              - column: "POST_MESSAGE"
+                strategy: "empty"
+
+        # Профили форума
+        - name: "b_forum_user"
+          action: "update"
+          fields:
+              - column: "ALIAS"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "DESCRIPTION"
+                strategy: "empty"
+              - column: "IP_ADDRESS"
+                strategy: "ip_private"
+                salt_source: "primary"
+              - column: "REAL_IP_ADDRESS"
+                strategy: "ip_private"
+                salt_source: "primary"
+              - column: "INTERESTS"
+                strategy: "empty"
+              - column: "SIGNATURE"
+                strategy: "empty"
+
+        # Темы форума
+        - name: "b_forum_topic"
+          action: "update"
+          fields:
+              - column: "USER_START_NAME"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "LAST_POSTER_NAME"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "ABS_LAST_POSTER_NAME"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "DESCRIPTION"
+                strategy: "empty"
+
+
+        # ============================================================
+        # РАССЫЛКИ (b_sender)
+        # ============================================================
+
+        # Контакты рассылок
+        - name: "b_sender_contact"
+          action: "update"
+          fields:
+              - column: "CODE"
+                strategy: "email_fake"
+                salt_source: "primary"
+              - column: "NAME"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "IP"
+                strategy: "ip_private"
+                salt_source: "primary"
+
+
+        # ============================================================
+        # ЗАДАЧИ (b_tasks)
+        # ============================================================
+
+        # Задачи
+        - name: "b_tasks"
           action: "update"
           fields:
               - column: "TITLE"
-                strategy: "company_fake"
-              - column: "UF_CRM_9_1739964407"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "UF_CRM_9_1743573690"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "UF_CRM_9_1743573714"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "UF_CRM_9_1743573734"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "UF_CRM_9_1743573590"
+                strategy: "task"
+                salt_source: "primary"
+              - column: "DESCRIPTION"
                 strategy: "empty"
-              - column: "UF_CRM_9_1743573615"
-                strategy: "empty"
-        - name: "b_crm_dynamic_items_1036_index"
-          action: "update"
-          fields:
-              - column: "SEARCH_CONTENT"
+              - column: "DECLINE_REASON"
                 strategy: "empty"
 
-        # 45. CRM Dynamic - Payments (Oplati)
-        - name: "b_crm_dynamic_items_1048"
+        # Результаты задач
+        - name: "b_tasks_result"
+          action: "update"
+          fields:
+              - column: "TEXT"
+                strategy: "empty"
+
+        # Задачи бизнес-процессов
+        - name: "b_bp_task"
+          action: "update"
+          fields:
+              - column: "NAME"
+                strategy: "bptask"
+                salt_source: "primary"
+              - column: "DESCRIPTION"
+                strategy: "empty"
+              - column: "PARAMETERS"
+                strategy: "empty"
+              - column: "DOCUMENT_NAME"
+                strategy: "doc"
+                salt_source: "primary"
+
+
+        # ============================================================
+        # ТИКЕТЫ ПОДДЕРЖКИ (b_ticket)
+        # ============================================================
+
+        # Тикеты
+        - name: "b_ticket"
           action: "update"
           fields:
               - column: "TITLE"
-                strategy: "company_fake"
-              - column: "UF_CRM_12_1743790332"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "UF_CRM_12_1743790365"
-                strategy: "string_random"
-                options: { length: 50 }
-        - name: "b_crm_dynamic_items_1048_index"
-          action: "update"
-          fields:
-              - column: "SEARCH_CONTENT"
+                strategy: "ticket"
+                salt_source: "primary"
+              - column: "OWNER_SID"
+                strategy: "str_16"
+                salt_source: "primary"
+              - column: "LAST_MESSAGE_SID"
+                strategy: "str_16"
+                salt_source: "primary"
+              - column: "SUPPORT_COMMENTS"
                 strategy: "empty"
 
-        # 46. Blog Tables (NewsSection)
-        - name: "b_blog"
+        # Сообщения тикетов
+        - name: "b_ticket_message"
           action: "update"
           fields:
-              - column: "NAME"
-                strategy: "string_random"
-                options: { length: 50 }
-        - name: "b_blog_category"
+              - column: "MESSAGE"
+                strategy: "empty"
+              - column: "MESSAGE_SEARCH"
+                strategy: "empty"
+              - column: "OWNER_SID"
+                strategy: "str_16"
+                salt_source: "primary"
+              - column: "EXTERNAL_FIELD_1"
+                strategy: "empty"
+
+        # ============================================================
+        # HR (b_hr)
+        # ============================================================
+
+        # Сотрудники HCMLink
+        - name: "b_hr_hcmlink_employee"
           action: "update"
           fields:
-              - column: "NAME"
-                strategy: "string_random"
-                options: { length: 50 }
+              - column: "DATA"
+                strategy: "empty"
+              - column: "CODE"
+                strategy: "emp_code"
+                salt_source: "primary"
+
+        # Персоны HCMLink
+        - name: "b_hr_hcmlink_person"
+          action: "update"
+          fields:
+              - column: "TITLE"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "CODE"
+                strategy: "pers_code"
+                salt_source: "primary"
+
+        # Задачи HCMLink
+        - name: "b_hr_hcmlink_job"
+          action: "update"
+          fields:
+              - column: "INPUT_DATA"
+                strategy: "empty"
+              - column: "OUTPUT_DATA"
+                strategy: "empty"
+
+        # ============================================================
+        # ПОДПИСАНИЕ ДОКУМЕНТОВ (b_sign)
+        # ============================================================
+
+        # Участники подписания
+        - name: "b_sign_member"
+          action: "update"
+          fields:
+              - column: "COMMUNICATION_VALUE"
+                strategy: "email_fake"
+                salt_source: "primary"
+              - column: "USER_DATA"
+                strategy: "empty"
+              - column: "IP"
+                strategy: "ip_private"
+                salt_source: "primary"
+              - column: "META"
+                strategy: "empty"
+              - column: "COMMUNICATION_TYPE"
+                strategy: "str_8"
+                salt_source: "primary"
+
+        # Значения полей подписанных документов
+        - name: "b_sign_field_value"
+          action: "update"
+          fields:
+              - column: "VALUE"
+                strategy: "empty"
+
+
+        # ============================================================
+        # ФОРМЫ (b_form)
+        # ============================================================
+
+        # Ответы форм (МАКСИМАЛЬНЫЙ РИСК — все пользовательские данные)
+        - name: "b_form_result_answer"
+          action: "update"
+          fields:
+              - column: "ANSWER_TEXT"
+                strategy: "empty"
+              - column: "ANSWER_TEXT_SEARCH"
+                strategy: "empty"
+              - column: "ANSWER_VALUE"
+                strategy: "str_10"
+                salt_source: "primary"
+              - column: "ANSWER_VALUE_SEARCH"
+                strategy: "empty"
+              - column: "USER_TEXT"
+                strategy: "empty"
+              - column: "USER_TEXT_SEARCH"
+                strategy: "empty"
+              - column: "USER_FILE_NAME"
+                strategy: "file_name"
+                salt_source: "primary"
+
+        # ============================================================
+        # БЛОГИ (b_blog)
+        # ============================================================
+
+        # Комментарии блогов
         - name: "b_blog_comment"
           action: "update"
           fields:
               - column: "AUTHOR_NAME"
                 strategy: "name_fake"
+                salt_source: "primary"
               - column: "AUTHOR_EMAIL"
                 strategy: "email_fake"
-              - column: "POST_MESSAGE"
-                strategy: "string_random"
-                options: { length: 100 }
+                salt_source: "primary"
+              - column: "AUTHOR_IP"
+                strategy: "ip_private"
+                salt_source: "primary"
+              - column: "AUTHOR_IP1"
+                strategy: "ip_private"
+                salt_source: "primary"
+
+        # Посты блогов
         - name: "b_blog_post"
           action: "update"
           fields:
               - column: "TITLE"
-                strategy: "string_random"
-                options: { length: 50 }
+                strategy: "post"
+                salt_source: "primary"
+              - column: "PREVIEW_TEXT"
+                strategy: "empty"
               - column: "DETAIL_TEXT"
-                strategy: "string_random"
-                options: { length: 100 }
+                strategy: "empty"
 
-        # 47. Sonet Log Tables
-        - name: "b_sonet_log"
+        # Пользователи блогов
+        - name: "b_blog_user"
           action: "update"
           fields:
-              - column: "TITLE"
-                strategy: "string_random"
-                options: { length: 50 }
-              - column: "MESSAGE"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "TEXT_MESSAGE"
-                strategy: "string_random"
-                options: { length: 100 }
-              - column: "URL"
-                strategy: "url_fake"
-        - name: "b_sonet_log_comment"
-          action: "update"
-          fields:
-              - column: "MESSAGE"
-                strategy: "string_random"
-                options: { length: 100 }
-
-        # 48. Sonet Group
-        - name: "b_sonet_group"
-          action: "update"
-          fields:
-              - column: "NAME"
-                strategy: "company_fake"
+              - column: "DESCRIPTION"
+                strategy: "empty"
+              - column: "ALIAS"
+                strategy: "name_fake"
+                salt_source: "primary"
+              - column: "INTERESTS"
+                strategy: "empty"
               - column: "SEARCH_CONTENT"
                 strategy: "empty"
 
-        # 49. CRM Bank Requisites
-        - name: "b_crm_requisite"
+        # ============================================================
+        # ОБУЧЕНИЕ (b_learn)
+        # ============================================================
+
+        # Студенты
+        - name: "b_learn_student"
+          action: "update"
+          fields:
+              - column: "RESUME"
+                strategy: "empty"
+
+        # Результаты тестов
+        - name: "b_learn_test_result"
+          action: "update"
+          fields:
+              - column: "RESPONSE"
+                strategy: "empty"
+
+        # ============================================================
+        # UTM-МЕТКИ (b_utm)
+        # ============================================================
+
+        # Пользовательские UTM (EAV — содержит email, телефоны, ФИО)
+        - name: "b_utm_user"
+          action: "update"
+          fields:
+              - column: "VALUE"
+                strategy: "empty"
+
+        # Юр. лица UTM
+        - name: "b_utm_user_legal"
+          action: "update"
+          fields:
+              - column: "VALUE"
+                strategy: "empty"
+
+        # ============================================================
+        # КАЛЕНДАРЬ (b_calendar)
+        # ============================================================
+
+        # События календаря
+        - name: "b_calendar_event"
           action: "update"
           fields:
               - column: "NAME"
-                strategy: "company_fake"
-              - column: "BANK_DETAIL_ID"
+                strategy: "event"
+                salt_source: "primary"
+              - column: "DESCRIPTION"
                 strategy: "empty"
-              - column: "MC_REQUISITE_ID"
+              - column: "LOCATION"
+                strategy: "str_10"
+                salt_source: "primary"
+              - column: "MEETING"
                 strategy: "empty"
-              - column: "MC_BANK_DETAIL_ID"
+              - column: "ATTENDEES_CODES"
                 strategy: "empty"
-              - column: "RQ_NAME"
-                strategy: "name_fake"
-              - column: "RQ_FIRST_NAME"
-                strategy: "name_fake"
-              - column: "RQ_LAST_NAME"
-                strategy: "lastname_fake"
-              - column: "RQ_SECOND_NAME"
-                strategy: "middlename_fake"
-              - column: "RQ_COMPANY_NAME"
-                strategy: "company_fake"
-              - column: "RQ_COMPANY_FULL_NAME"
-                strategy: "company_fake"
-              - column: "RQ_COMPANY_REG_DATE"
-                strategy: "empty"
-              - column: "RQ_DIRECTOR"
-                strategy: "name_fake"
-              - column: "RQ_ACCOUNTANT"
-                strategy: "name_fake"
-              - column: "RQ_CEO_NAME"
-                strategy: "name_fake"
-              - column: "RQ_CEO_WORK_POS"
-                strategy: "empty"
-              - column: "RQ_CONTACT"
-                strategy: "name_fake"
-              - column: "RQ_EMAIL"
-                strategy: "email_fake"
-              - column: "RQ_PHONE"
-                strategy: "phone_fake"
-              - column: "RQ_FAX"
-                strategy: "phone_fake"
-              - column: "RQ_INN"
-                strategy: "empty"
-              - column: "RQ_KPP"
-                strategy: "empty"
-              - column: "RQ_USRLE"
-                strategy: "empty"
-              - column: "RQ_IFNS"
-                strategy: "empty"
-              - column: "RQ_OGRN"
-                strategy: "empty"
-              - column: "RQ_OGRNIP"
-                strategy: "empty"
-              - column: "RQ_OKPO"
-                strategy: "empty"
-              - column: "RQ_OKTMO"
-                strategy: "empty"
-              - column: "RQ_OKVED"
-                strategy: "empty"
-              - column: "RQ_EDRPOU"
-                strategy: "empty"
-              - column: "RQ_DRFO"
-                strategy: "empty"
-              - column: "RQ_KBE"
-                strategy: "empty"
-              - column: "RQ_IIN"
-                strategy: "empty"
-              - column: "RQ_BIN"
-                strategy: "empty"
-              - column: "RQ_ST_CERT_SER"
-                strategy: "empty"
-              - column: "RQ_ST_CERT_NUM"
-                strategy: "empty"
-              - column: "RQ_ST_CERT_DATE"
-                strategy: "empty"
-              - column: "RQ_VAT_PAYER"
-                strategy: "empty"
-              - column: "RQ_VAT_CERT_SER"
-                strategy: "empty"
-              - column: "RQ_VAT_CERT_NUM"
-                strategy: "empty"
-              - column: "RQ_VAT_CERT_DATE"
-                strategy: "empty"
-              - column: "RQ_RESIDENCE_COUNTRY"
-                strategy: "empty"
-              - column: "RQ_BASE_DOC"
-                strategy: "empty"
-              - column: "RQ_REGON"
-                strategy: "empty"
-              - column: "RQ_KRS"
-                strategy: "empty"
-              - column: "RQ_PESEL"
-                strategy: "empty"
-              - column: "RQ_LEGAL_FORM"
-                strategy: "empty"
-              - column: "RQ_SIRET"
-                strategy: "empty"
-              - column: "RQ_SIREN"
-                strategy: "empty"
-              - column: "RQ_CAPITAL"
-                strategy: "empty"
-              - column: "RQ_RCS"
-                strategy: "empty"
-              - column: "RQ_CNPJ"
-                strategy: "empty"
-              - column: "RQ_STATE_REG"
-                strategy: "empty"
-              - column: "RQ_MNPL_REG"
-                strategy: "empty"
-              - column: "RQ_CPF"
-                strategy: "empty"
-              - column: "RQ_SIGNATURE"
-                strategy: "empty"
-              - column: "RQ_STAMP"
+              - column: "SEARCHABLE_CONTENT"
                 strategy: "empty"
 
-        # 50. CRM Timeline
-        - name: "b_crm_timeline"
-          action: "update"
-          fields:
-              - column: "COMMENT"
-                strategy: "empty"
-        - name: "b_crm_timeline_search"
-          action: "update"
-          fields:
-              - column: "SEARCH_CONTENT"
-                strategy: "empty"
+        # ============================================================
+        # AI-ЧАТБОТ (b_ai_chatbot)
+        # ============================================================
 
-        # 51. User Index and Related
-        - name: "b_uts_user"
+        # Сообщения чатбота
+        - name: "b_ai_chatbot_message"
           action: "update"
           fields:
-              - column: "UF_FIO"
+              - column: "CONTENT"
                 strategy: "empty"
-        - name: "b_user_index"
-          action: "update"
-          fields:
-              - column: "NAME"
+              - column: "PARAMS"
                 strategy: "empty"
-              - column: "LAST_NAME"
-                strategy: "empty"
-              - column: "SECOND_NAME"
-                strategy: "empty"
-              - column: "WORK_POSITION"
-                strategy: "empty"
-              - column: "UF_DEPARTMENT_NAME"
-                strategy: "empty"
-              - column: "SEARCH_USER_CONTENT"
-                strategy: "empty"
-              - column: "SEARCH_DEPARTMENT_CONTENT"
-                strategy: "empty"
-              - column: "SEARCH_ADMIN_CONTENT"
-                strategy: "empty"
-        - name: "b_user_password"
-          action: "truncate"
-        - name: "b_user_profile_history"
-          action: "truncate"
-        - name: "b_user_profile_record"
-          action: "truncate"
-        - name: "b_user_stored_auth"
-          action: "truncate"
 
 consistency_groups:
-    # Group: Phone numbers in multi-fields
+    # ===== Телефоны CRM: мультиполя → история звонков =====
     - id: "crm_phone_unique"
+      comment: "Каждый телефон в мультиполях получает уникальный фейк. История звонков сопоставляется по значению."
       anchor:
           table: "b_crm_field_multi"
           id_column: "ID"
@@ -1388,7 +1519,7 @@ consistency_groups:
       generator:
           deterministic: true
           strategy: "phone_fake"
-          salt_source: "row_id"
+          salt_source: "primary"
       targets:
           - table: "b_crm_field_multi"
             column: "VALUE"
@@ -1410,8 +1541,9 @@ consistency_groups:
                 match_value_source: "anchor.VALUE"
                 replace: true
 
-    # Group: Email addresses in multi-fields
+    # ===== Email CRM: мультиполя → история звонков =====
     - id: "crm_email_unique"
+      comment: "Каждый email в мультиполях получает уникальный фейк. История коммуникаций сопоставляется по значению."
       anchor:
           table: "b_crm_field_multi"
           id_column: "ID"
@@ -1424,7 +1556,7 @@ consistency_groups:
       generator:
           deterministic: true
           strategy: "email_fake"
-          salt_source: "row_id"
+          salt_source: "primary"
       targets:
           - table: "b_crm_field_multi"
             column: "VALUE"
@@ -1445,25 +1577,3 @@ consistency_groups:
                 match_key: "EMAIL"
                 match_value_source: "anchor.VALUE"
                 replace: true
-
-    # Group: URLs in multi-fields
-    - id: "crm_url_unique"
-      anchor:
-          table: "b_crm_field_multi"
-          id_column: "ID"
-          context_columns:
-              - "ENTITY_ID"
-              - "VALUE"
-          filters:
-              - column: "TYPE_ID"
-                value: "WEB"
-      generator:
-          deterministic: true
-          strategy: "url_fake"
-          salt_source: "row_id"
-      targets:
-          - table: "b_crm_field_multi"
-            column: "VALUE"
-            join:
-                key_column: "ID"
-                ref_column: "ID"

@@ -15,15 +15,20 @@ class FakeNameStrategy extends AbstractStrategy
         'Александр', 'Игорь', 'Олег', 'Виталий', 'Валентин', 'Юрий', 'Богдан', 'Тимофей', 'Георгий', 'Роман',
     ];
 
-    public function __construct(string $strategyName = "name_fake")
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function __construct(string $strategyName = "name_fake", array $options = [])
     {
-        parent::__construct($strategyName);
+        parent::__construct($strategyName, $options);
     }
 
     public function generate(mixed $originalValue, ?string $salt = null): string
     {
         if ($salt !== null) {
             $id = intval($salt);
+        } elseif ($originalValue === null) {
+            return '';
         } elseif (is_numeric($originalValue)) {
             $id = $originalValue;
         } else {

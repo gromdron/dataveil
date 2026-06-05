@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace DataVeil\Consistency;
 
 use DataVeil\Config\Configuration;
+use DataVeil\Console\DataVeilLoggerInterface;
+use DataVeil\Console\NullLogger;
 use DataVeil\Database\Connection;
+use DataVeil\Database\SchemaValidator;
 use DataVeil\Serializer\SerializerHandler;
 use DataVeil\Strategy\StrategyManager;
 
@@ -14,15 +17,21 @@ class ConsistencyProcessor
     private Connection $connection;
     private StrategyManager $strategyManager;
     private SerializerHandler $serializerHandler;
+    private SchemaValidator $schemaValidator;
+    private DataVeilLoggerInterface $logger;
 
     public function __construct(
         Connection $connection,
         StrategyManager $strategyManager,
-        SerializerHandler $serializerHandler
+        SerializerHandler $serializerHandler,
+        SchemaValidator $schemaValidator,
+        ?DataVeilLoggerInterface $logger = null
     ) {
         $this->connection = $connection;
         $this->strategyManager = $strategyManager;
         $this->serializerHandler = $serializerHandler;
+        $this->schemaValidator = $schemaValidator;
+        $this->logger = $logger ?? new NullLogger();
     }
 
     /**
@@ -40,6 +49,9 @@ class ConsistencyProcessor
      */
     private function processConsistencyGroup(array $group): void
     {
+        $groupId = $group['id'] ?? 'unknown';
+        $this->logger->debug("Process group `{$groupId}`");
+
         $anchor = $group['anchor'];
         $generator = $group['generator'];
         $targets = $group['targets'];
@@ -47,7 +59,6 @@ class ConsistencyProcessor
         $anchorTable = $anchor['table'];
         $idColumn = $anchor['id_column'];
         $contextColumns = $anchor['context_columns'] ?? [];
-
         $filters = $anchor['filters'] ?? [];
 
         $saltSource = $generator['salt_source'] ?? null;
@@ -56,9 +67,18 @@ class ConsistencyProcessor
 
         $anchorData = $this->fetchAnchorData($anchorTable, $idColumn, $contextColumns, $filters);
 
+        $totalCount = count($anchorData);
+        $this->logger->progress("Record count: {$totalCount}");
+
+        $current = 0;
         foreach ($anchorData as $anchorRow) {
+            $current++;
             $anchorId = $anchorRow[$idColumn];
-            $salt = $saltSource === 'row_id' ? (string) $anchorId : null;
+
+            $percent = $totalCount > 0 ? (int) (($current / $totalCount) * 100) : 0;
+            $this->logger->progress(sprintf("Process row id: %d / %d (%3d%%)", $current, $totalCount, $percent));
+
+            $salt = $saltSource === 'primary' ? (string) $anchorId : null;
 
             $generatedValue = $this->strategyManager->generate(
                 $strategyName,
@@ -71,7 +91,8 @@ class ConsistencyProcessor
                     $target,
                     $anchorRow,
                     $generatedValue,
-                    $anchorId
+                    $anchorId,
+                    $anchorTable
                 );
             }
         }
@@ -91,6 +112,20 @@ class ConsistencyProcessor
         array $contextColumns,
         array $filters
     ): array {
+        if (!$this->schemaValidator->validateTable($table, $this->logger)) {
+            return [];
+        }
+
+        if (!$this->schemaValidator->validateColumn($table, $idColumn, $this->logger)) {
+            return [];
+        }
+
+        foreach ($contextColumns as $column) {
+            if (!$this->schemaValidator->validateColumn($table, $column, $this->logger)) {
+                return [];
+            }
+        }
+
         $sql = 'SELECT ' . $idColumn . ', ' . implode(', ', $contextColumns);
         $sql .= ' FROM ' . $table;
 
@@ -135,7 +170,8 @@ class ConsistencyProcessor
         array $target,
         array $anchorRow,
         string $newValue,
-        int $anchorId
+        int $anchorId,
+        string $anchorTable
     ): void {
         $targetTable = $target['table'];
         $targetColumn = $target['column'];
@@ -145,7 +181,7 @@ class ConsistencyProcessor
         if (isset($join['serialized_value_match'])) {
             $this->updateSerializedField($targetTable, $targetColumn, $anchorRow, $newValue, $join);
         } else {
-            $this->updatePlainField($targetTable, $targetColumn, $anchorRow, $newValue, $join, $anchorId);
+            $this->updatePlainField($targetTable, $targetColumn, $anchorRow, $newValue, $join, $anchorId, $anchorTable);
         }
     }
 
@@ -163,9 +199,14 @@ class ConsistencyProcessor
         array $anchorRow,
         string $newValue,
         array $join,
-        int $anchorId
+        int $anchorId,
+        string $anchorTable
     ): void {
-        if ($table === $anchorRow['table']) {
+        if (!$this->schemaValidator->validateColumn($table, $column, $this->logger)) {
+            return;
+        }
+
+        if ($table === $anchorTable) {
             $idColumn = $join['key_column'] ?? 'ID';
             $this->updateById($table, $column, $newValue, $anchorId, $idColumn);
         } elseif (isset($join['key_column'], $join['ref_column'])) {
@@ -196,6 +237,10 @@ class ConsistencyProcessor
         string $newValue,
         array $join
     ): void {
+        if (!$this->schemaValidator->validateColumn($table, $column, $this->logger)) {
+            return;
+        }
+
         $serializedData = $this->getSerializedField($table, $column, $anchorRow, $join);
 
         if ($serializedData === null) {
@@ -309,12 +354,31 @@ class ConsistencyProcessor
             $filtersSql = ' AND ' . implode(' AND ', $filterClauses);
         }
 
+        $this->logger->progress(sprintf(
+            "  [%s] UPDATE serialized %s.%s WHERE %s=%s",
+            $tableEscaped,
+            $tableEscaped,
+            $columnEscaped,
+            $entityIdColumn,
+            $entityIdEscaped,
+        ));
+
         $sql = "UPDATE {$tableEscaped} SET {$columnEscaped} = '{$newSerializedEscaped}' WHERE {$entityIdColumn} = {$entityIdEscaped}{$filtersSql}";
         $this->connection->query($sql);
     }
 
     private function updateById(string $table, string $column, string $value, int $id, string $idColumn): void
     {
+        $this->logger->progress(sprintf(
+            "  [%s] UPDATE %s SET %s='%s' WHERE %s=%d",
+            $table,
+            $table,
+            $column,
+            $value,
+            $idColumn,
+            $id,
+        ));
+
         $stmt = $this->connection->prepare(
             "UPDATE {$table} SET {$column} = ? WHERE {$idColumn} = ?"
         );
@@ -330,6 +394,16 @@ class ConsistencyProcessor
         string $keyColumn,
         mixed $anchorValue
     ): void {
+        $this->logger->progress(sprintf(
+            "  [%s] UPDATE %s SET %s='%s' WHERE %s='%s'",
+            $table,
+            $table,
+            $column,
+            $value,
+            $keyColumn,
+            (string) $anchorValue,
+        ));
+
         $stmt = $this->connection->prepare(
             "UPDATE {$table} SET {$column} = ? WHERE {$keyColumn} = ?"
         );

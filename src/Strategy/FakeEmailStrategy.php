@@ -6,15 +6,20 @@ namespace DataVeil\Strategy;
 
 class FakeEmailStrategy extends AbstractStrategy
 {
-    public function __construct(string $strategyName = "email_fake")
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function __construct(string $strategyName = "email_fake", array $options = [])
     {
-        parent::__construct($strategyName);
+        parent::__construct($strategyName, $options);
     }
 
     public function generate(mixed $originalValue, ?string $salt = null): string
     {
         if ($salt !== null) {
             $id = $salt;
+        } elseif ($originalValue === null) {
+            return '';
         } elseif (is_numeric($originalValue)) {
             $id = $originalValue;
         } else {

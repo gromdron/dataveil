@@ -13,17 +13,19 @@ use mysqli_stmt;
 class Connection
 {
     private string $host;
+    private int $port;
     private string $database;
     private string $login;
     private string $password;
     private ?mysqli $_mysqli = null;
 
-    public function __construct(string $host, string $database, string $login, string $password)
+    public function __construct(string $host, string $database, string $login, string $password, int $port = 3306)
     {
         $this->host = $host;
         $this->database = $database;
         $this->login = $login;
         $this->password = $password;
+        $this->port = $port;
     }
 
 
@@ -46,7 +48,7 @@ class Connection
      */
     private function connect(): void
     {
-        $this->_mysqli = new mysqli($this->host, $this->login, $this->password, $this->database);
+        $this->_mysqli = new mysqli($this->host, $this->login, $this->password, $this->database, $this->port);
 
         if ($this->_mysqli->connect_error) {
             throw new ConnectionException(
@@ -163,6 +165,27 @@ class Connection
         $result->free();
 
         return $columns;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function getPrimaryKeys(string $table): array
+    {
+        $columns = $this->getTableColumns($table);
+        $pkColumns = [];
+
+        foreach ($columns as $column) {
+            if (($column['Key'] ?? '') === 'PRI') {
+                $pkColumns[] = $column['Field'];
+            }
+        }
+
+        if ($pkColumns === []) {
+            throw new DatabaseException("Table '{$table}' has no primary key");
+        }
+
+        return $pkColumns;
     }
 
     public function escape(string $value): string

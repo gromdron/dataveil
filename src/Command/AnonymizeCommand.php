@@ -6,6 +6,7 @@ namespace DataVeil\Command;
 
 use DataVeil\Config\Configuration;
 use DataVeil\Anonymizer\AnonymizerService;
+use DataVeil\Console\ConsoleLogger;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -45,38 +46,35 @@ class AnonymizeCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = new SymfonyStyle($input, $output);
-
+        $logger = new ConsoleLogger($output);
         $configPath = $input->getArgument('config');
 
         if (!file_exists($configPath)) {
-            $io->error("Configuration file not found: {$configPath}");
+            $logger->error("Configuration file not found: {$configPath}");
             return Command::FAILURE;
         }
 
         try {
             $config = new Configuration($configPath);
         } catch (\Exception $e) {
-            $io->error('Configuration error: ' . $e->getMessage());
+            $logger->error('Configuration error: ' . $e->getMessage());
             return Command::FAILURE;
         }
 
         $dryRun = $input->getOption('dry-run');
 
         if ($dryRun) {
+            $io = new SymfonyStyle($input, $output);
             $io->note('Dry run mode - no changes will be made');
             $this->showDryRunInfo($config, $io);
             return Command::SUCCESS;
         }
 
-        $io->info('Starting database anonymization...');
-
         try {
-            $anonymizer = new AnonymizerService($config);
+            $anonymizer = new AnonymizerService($config, $logger);
             $anonymizer->anonymize();
-            $io->success('Anonymization completed successfully');
         } catch (\Exception $e) {
-            $io->error('Anonymization failed: ' . $e->getMessage());
+            $logger->error($e->getMessage());
             return Command::FAILURE;
         }
 

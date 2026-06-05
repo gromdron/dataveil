@@ -8,9 +8,18 @@ abstract class AbstractStrategy implements StrategyInterface
 {
     protected string $strategyName;
 
-    public function __construct(string $strategyName)
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $options;
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function __construct(string $strategyName, array $options = [])
     {
         $this->strategyName = $strategyName;
+        $this->options = $options;
     }
 
     abstract public function generate(mixed $originalValue, ?string $salt = null): string;

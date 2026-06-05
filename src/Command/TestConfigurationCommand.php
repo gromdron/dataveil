@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace DataVeil\Command;
 
+use DataVeil\Config\BitrixSettingsParser;
 use DataVeil\Config\Configuration;
+use DataVeil\Database\Connection;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -24,6 +27,13 @@ class TestConfigurationCommand extends Command
             'config',
             InputArgument::REQUIRED,
             'YAML config'
+        );
+
+        $this->addOption(
+            'with-connection',
+            null,
+            InputOption::VALUE_NONE,
+            'Also verify database connection'
         );
     }
 
@@ -44,9 +54,24 @@ class TestConfigurationCommand extends Command
             $io->success("Configuration valid");
             
             $dbConfig = $config->getDatabaseConfig();
-            $io->note(sprintf("Configuration path: %s", $dbConfig['settings_file']));
-            $io->note(sprintf("Configuration name: %s", $dbConfig['connection_name']));
+
+            if ($dbConfig['source'] === 'bitrix_settings') {
+                $io->note(sprintf("Source: bitrix_settings"));
+                $io->note(sprintf("Settings file: %s", $dbConfig['settings_file']));
+                $io->note(sprintf("Connection name: %s", $dbConfig['connection_name']));
+            } else {
+                $io->note(sprintf("Source: mysql"));
+                $io->note(sprintf("Host: %s:%d", $dbConfig['host'], $dbConfig['port']));
+                $io->note(sprintf("Database: %s", $dbConfig['database']));
+                $io->note(sprintf("Login: %s", $dbConfig['login']));
+            }
             
+            if ($input->getOption('with-connection')) {
+                if (!$this->testConnection($dbConfig, $io)) {
+                    return Command::FAILURE;
+                }
+            }
+
             $rules = $config->getRules();
             if (!empty($rules)) {
                 $io->info(sprintf("Easy rules: %d", count($rules)));
@@ -54,7 +79,7 @@ class TestConfigurationCommand extends Command
             
             $groups = $config->getConsistencyGroups();
             if (!empty($groups)) {
-                $io->info(sprintf("Consistency groupds: %d", count($groups)));
+                $io->info(sprintf("Consistency groups: %d", count($groups)));
             }
             
             return Command::SUCCESS;
@@ -67,6 +92,50 @@ class TestConfigurationCommand extends Command
             }
             
             return Command::FAILURE;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $dbConfig
+     */
+    private function testConnection(array $dbConfig, SymfonyStyle $io): bool
+    {
+        $connection = null;
+        try {
+            if ($dbConfig['source'] === 'bitrix_settings') {
+                $parser = new BitrixSettingsParser(
+                    $dbConfig['settings_file'],
+                    $dbConfig['connection_name'],
+                );
+                $connectionParams = $parser->parse();
+
+                $connection = new Connection(
+                    $connectionParams['host'],
+                    $connectionParams['database'],
+                    $connectionParams['login'],
+                    $connectionParams['password'],
+                    $connectionParams['port'],
+                );
+            } else {
+                $connection = new Connection(
+                    $dbConfig['host'],
+                    $dbConfig['database'],
+                    $dbConfig['login'],
+                    $dbConfig['password'],
+                    $dbConfig['port'],
+                );
+            }
+
+            $connection->query('SELECT 1');
+            $io->success('Connection: OK');
+            return true;
+        } catch (\Exception $e) {
+            $io->error('Connection failed: ' . $e->getMessage());
+            return false;
+        } finally {
+            if ($connection !== null) {
+                $connection->close();
+            }
         }
     }
 }

@@ -22,15 +22,20 @@ class FakePhoneStrategy extends AbstractStrategy
         '990', '991', '992', '993', '994', '995', '996', '997', '998', '999',
     ];
 
-    public function __construct(string $strategyName = "phone_fake")
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function __construct(string $strategyName = "phone_fake", array $options = [])
     {
-        parent::__construct($strategyName);
+        parent::__construct($strategyName, $options);
     }
 
     public function generate(mixed $originalValue, ?string $salt = null): string
     {
         if ($salt !== null) {
             $id = intval($salt);
+        } elseif ($originalValue === null) {
+            return '';
         } elseif (is_numeric($originalValue)) {
             $id = $originalValue;
         } else {

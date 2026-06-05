@@ -3,8 +3,16 @@ version: 1.0
 database:
     source: "bitrix_settings"
     bitrix:
-        settings_file: "/home/bitrix/www/bitrix/.settings.php"
+        settings_file: "./tests/fixtures/.settings.php"
         connection_name: "default"
+
+strategies:
+    - name: "user_login"
+      type: "string_random"
+      options: { length: 10, prefix: "user_" }
+    - name: "short_string"
+      type: "string_random"
+      options: { length: 6, prefix: "" }
 
 rules:
     tables:
@@ -18,14 +26,15 @@ rules:
               - column: "EMAIL"
                 strategy: "email_fake"
               - column: "LOGIN"
-                strategy: "string_random"
-                options: { length: 10, prefix: "user_" }
+                strategy: "user_login"
               - column: "NAME"
                 strategy: "name_fake"
               - column: "LAST_NAME"
                 strategy: "lastname_fake"
               - column: "PERSONAL_PHONE"
                 strategy: "phone_fake"
+              - column: "SECOND_NAME"
+                strategy: "short_string"
           where: "ID NOT IN (1)"
 
 consistency_groups:
@@ -40,7 +49,7 @@ consistency_groups:
       generator:
           deterministic: true
           strategy: "phone_fake"
-          salt_source: "row_id"
+          salt_source: "primary"
       targets:
           - table: "b_crm_field_multi"
             column: "VALUE"
@@ -66,7 +75,7 @@ consistency_groups:
       generator:
           deterministic: true
           strategy: "email_fake"
-          salt_source: "row_id"
+          salt_source: "primary"
       targets:
           - table: "b_crm_field_multi"
             column: "VALUE"
