@@ -45,7 +45,7 @@ class FakePhoneStrategy extends AbstractStrategy
         $areasCount = count(self::$areaCodes);
         $index = ($id % $areasCount + $areasCount) % $areasCount;
         $areaCode = self::$areaCodes[$index];
-        $localNumber = str_pad((string) ($index % 1000000), 7, '0', STR_PAD_LEFT);
+        $localNumber = str_pad((string) (($id % 10000000 + 10000000) % 10000000), 7, '0', STR_PAD_LEFT);
 
         return "+7{$areaCode}{$localNumber[0]}{$localNumber[1]}{$localNumber[2]}{$localNumber[3]}{$localNumber[4]}{$localNumber[5]}{$localNumber[6]}";
     }
