@@ -64,6 +64,94 @@ class AnonymizerServiceTest extends TestCase
         return $strategy;
     }
 
+    public function testTruncateActionExecutesTruncateQuery(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $connection->method('escape')->willReturnCallback(static fn(string $value): string => $value);
+        $connection->expects($this->once())
+            ->method('query')
+            ->with('TRUNCATE TABLE b_search_content');
+
+        $service = $this->createService(
+            rules: [[
+                'name' => 'b_search_content',
+                'action' => 'truncate',
+            ]],
+            connection: $connection,
+            schemaValidator: $this->createMock(SchemaValidator::class),
+            strategyManager: $this->createMock(StrategyManager::class),
+        );
+
+        $service->anonymize();
+    }
+
+    public function testDeleteActionExecutesDeleteQuery(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $connection->method('escape')->willReturnCallback(static fn(string $value): string => $value);
+        $connection->expects($this->once())
+            ->method('query')
+            ->with('DELETE FROM b_search_content');
+
+        $service = $this->createService(
+            rules: [[
+                'name' => 'b_search_content',
+                'action' => 'delete',
+            ]],
+            connection: $connection,
+            schemaValidator: $this->createMock(SchemaValidator::class),
+            strategyManager: $this->createMock(StrategyManager::class),
+        );
+
+        $service->anonymize();
+    }
+
+    public function testWarnsAboutAtomicityWhenTruncateRulesPresent(): void
+    {
+        $logger = $this->createMock(DataVeilLoggerInterface::class);
+        $logger->expects($this->atLeastOnce())
+            ->method('warning')
+            ->with($this->stringContains('TRUNCATE'));
+
+        $connection = $this->createMock(Connection::class);
+        $connection->method('escape')->willReturnCallback(static fn(string $value): string => $value);
+
+        $service = $this->createService(
+            rules: [[
+                'name' => 'b_search_content',
+                'action' => 'truncate',
+            ]],
+            connection: $connection,
+            schemaValidator: $this->createMock(SchemaValidator::class),
+            strategyManager: $this->createMock(StrategyManager::class),
+            logger: $logger,
+        );
+
+        $service->anonymize();
+    }
+
+    public function testDoesNotWarnWhenNoTruncateRules(): void
+    {
+        $logger = $this->createMock(DataVeilLoggerInterface::class);
+        $logger->expects($this->never())->method('warning');
+
+        $connection = $this->createMock(Connection::class);
+        $connection->method('escape')->willReturnCallback(static fn(string $value): string => $value);
+
+        $service = $this->createService(
+            rules: [[
+                'name' => 'b_search_content',
+                'action' => 'delete',
+            ]],
+            connection: $connection,
+            schemaValidator: $this->createMock(SchemaValidator::class),
+            strategyManager: $this->createMock(StrategyManager::class),
+            logger: $logger,
+        );
+
+        $service->anonymize();
+    }
+
     public function testUpdatePreparesOnceAndExecutesPerRow(): void
     {
         $connection = $this->createMock(Connection::class);

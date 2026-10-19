@@ -410,6 +410,113 @@ class ConfigurationTest extends TestCase
         unlink($configPath);
     }
 
+    public function testRuleWithEveryValidActionPassesValidation(): void
+    {
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'mysql',
+                'mysql' => [
+                    'host' => 'localhost',
+                    'database' => 'test_db',
+                    'login' => 'root',
+                    'password' => '',
+                ],
+            ],
+            'rules' => [
+                'tables' => [
+                    ['name' => 'b_search_content', 'action' => 'truncate'],
+                    ['name' => 'b_user', 'action' => 'update', 'fields' => []],
+                    ['name' => 'b_mail_message', 'action' => 'delete'],
+                ],
+            ],
+        ]);
+
+        $config = new Configuration($configPath);
+
+        $rules = $config->getRules();
+        $this->assertSame(['truncate', 'update', 'delete'], array_column($rules, 'action'));
+
+        unlink($configPath);
+    }
+
+    public function testRuleWithUnknownActionThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage("unknown action 'delte'");
+
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'mysql',
+                'mysql' => [
+                    'host' => 'localhost',
+                    'database' => 'test_db',
+                    'login' => 'root',
+                    'password' => '',
+                ],
+            ],
+            'rules' => [
+                'tables' => [
+                    ['name' => 'b_search_content', 'action' => 'delte'],
+                ],
+            ],
+        ]);
+
+        new Configuration($configPath);
+        unlink($configPath);
+    }
+
+    public function testRuleMissingActionThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage("missing or invalid 'action'");
+
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'mysql',
+                'mysql' => [
+                    'host' => 'localhost',
+                    'database' => 'test_db',
+                    'login' => 'root',
+                    'password' => '',
+                ],
+            ],
+            'rules' => [
+                'tables' => [
+                    ['name' => 'b_search_content'],
+                ],
+            ],
+        ]);
+
+        new Configuration($configPath);
+        unlink($configPath);
+    }
+
+    public function testRuleMissingNameThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage("missing or invalid 'name'");
+
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'mysql',
+                'mysql' => [
+                    'host' => 'localhost',
+                    'database' => 'test_db',
+                    'login' => 'root',
+                    'password' => '',
+                ],
+            ],
+            'rules' => [
+                'tables' => [
+                    ['action' => 'delete'],
+                ],
+            ],
+        ]);
+
+        new Configuration($configPath);
+        unlink($configPath);
+    }
+
     private string $lastTempConfigPath = '';
 
     /**
