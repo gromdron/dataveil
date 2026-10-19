@@ -73,7 +73,7 @@ class ConsistencyProcessor
         $current = 0;
         foreach ($anchorData as $anchorRow) {
             $current++;
-            $anchorId = $anchorRow[$idColumn];
+            $anchorId = (int) $anchorRow[$idColumn];
 
             $percent = $totalCount > 0 ? (int) (($current / $totalCount) * 100) : 0;
             $this->logger->progress(sprintf("Process row id: %d / %d (%3d%%)", $current, $totalCount, $percent));
@@ -129,6 +129,7 @@ class ConsistencyProcessor
         $sql = 'SELECT ' . $idColumn . ', ' . implode(', ', $contextColumns);
         $sql .= ' FROM ' . $table;
 
+        $params = [];
         if (!empty($filters)) {
             $whereClauses = [];
             foreach ($filters as $filter) {
@@ -178,8 +179,8 @@ class ConsistencyProcessor
 
         $join = $target['join'] ?? [];
 
-        if (isset($join['serialized_value_match'])) {
-            $this->updateSerializedField($targetTable, $targetColumn, $anchorRow, $newValue, $join);
+        if (($join['type'] ?? null) === 'serialized_value_match') {
+            $this->updateSerializedField($targetTable, $targetColumn, $anchorRow, $newValue, $target);
         } else {
             $this->updatePlainField($targetTable, $targetColumn, $anchorRow, $newValue, $join, $anchorId, $anchorTable);
         }
@@ -224,78 +225,140 @@ class ConsistencyProcessor
     }
 
     /**
+     * Update a serialized target field (join type "serialized_value_match").
+     *
+     * Target rows are looked up by the entity relation
+     * (target.entity_id_column = anchor.ref_entity_column) plus join filters.
+     * For each matching row the serialized structure is parsed, the value under
+     * match_key equal to the anchor value is replaced, and the row is updated
+     * by its own key column — but only when the structure actually changed.
+     *
      * @param      string  $table      The table
      * @param      string  $column     The column
      * @param      array<mixed>   $anchorRow  The anchor row
      * @param      string  $newValue   The new value
-     * @param      array<mixed>   $join       The join
+     * @param      array<mixed>   $target  The target config (join + serialization)
      */
     private function updateSerializedField(
         string $table,
         string $column,
         array $anchorRow,
         string $newValue,
-        array $join
+        array $target
     ): void {
         if (!$this->schemaValidator->validateColumn($table, $column, $this->logger)) {
             return;
         }
 
-        $serializedData = $this->getSerializedField($table, $column, $anchorRow, $join);
-
-        if ($serializedData === null) {
-            return;
-        }
-
-        $serializationConfig = $join['serialization'] ?? [];
-        $matchKey = $serializationConfig['match_key'];
+        $join = $target['join'];
+        $serializationConfig = $target['serialization'] ?? [];
+        $matchKey = $serializationConfig['match_key'] ?? '';
         $matchValueSource = $serializationConfig['match_value_source'] ?? '';
         $matchValue = $this->extractAnchorValue($matchValueSource, $anchorRow);
 
-        $newSerialized = $this->serializerHandler->findAndReplaceInSerialized(
-            $serializedData,
-            $matchKey,
-            strval($matchValue),
-            $newValue
-        );
+        if ($matchKey === '' || $matchValue === null || $matchValue === '') {
+            return;
+        }
 
-        $this->updateSerializedInTable($table, $column, $newSerialized, $anchorRow, $join);
+        $refEntityColumn = $join['ref_entity_column'] ?? null;
+
+        if ($refEntityColumn === null) {
+            $this->logger->warning(
+                "Target {$table}.{$column}: join.ref_entity_column is required for serialized_value_match, skipping"
+            );
+            return;
+        }
+
+        $anchorEntityId = $anchorRow[$refEntityColumn] ?? null;
+
+        if ($anchorEntityId === null) {
+            return;
+        }
+
+        $rows = $this->fetchSerializedTargetRows($table, $column, $join, $anchorEntityId);
+
+        foreach ($rows as $row) {
+            $rowId = $row['ID'] ?? null;
+            $serializedData = $row[$column] ?? null;
+
+            if ($rowId === null || !is_string($serializedData)) {
+                continue;
+            }
+
+            $newSerialized = $this->serializerHandler->findAndReplaceInSerialized(
+                $serializedData,
+                $matchKey,
+                $matchValue,
+                $newValue
+            );
+
+            if ($newSerialized === $serializedData) {
+                continue;
+            }
+
+            $this->updateSerializedRow($table, $column, $newSerialized, (string) $rowId);
+        }
     }
 
     /**
-     * @param      string       $table      The table
-     * @param      string       $column     The column
-     * @param      array<mixed>        $anchorRow  The anchor row
-     * @param      array<mixed>        $join       The join
+     * Fetch target rows whose serialized field may contain the anchor value:
+     * matched by entity relation and optional join filters.
      *
-     * @return     null|string  The serialized field.
+     * @param      array<mixed>   $join       The join config
+     * @param      mixed  $anchorEntityId  The anchor entity identifier
+     *
+     * @return     array<mixed>   The target rows (key column + serialized column).
      */
-    private function getSerializedField(
-        string $table,
-        string $column,
-        array $anchorRow,
-        array $join
-    ): ?string {
-        $idColumn = $join['key_column'] ?? 'ID';
-        $idValue = $anchorRow[$idColumn] ?? null;
+    private function fetchSerializedTargetRows(string $table, string $column, array $join, mixed $anchorEntityId): array
+    {
+        $entityIdColumn = $join['entity_id_column'] ?? 'OWNER_ID';
+        $keyColumn = $join['key_column'] ?? 'ID';
 
-        if ($idValue === null) {
-            return null;
+        $sql = "SELECT {$keyColumn}, {$column} FROM {$table} WHERE {$entityIdColumn} = ?";
+        $types = 's';
+        $params = [$anchorEntityId];
+
+        if (!empty($join['filters']) && \is_array($join['filters'])) {
+            foreach ($join['filters'] as $filter) {
+                $sql .= " AND {$filter['column']} = ?";
+                $types .= 's';
+                $params[] = $filter['value'];
+            }
         }
 
-        $stmt = $this->connection->prepare(
-            "SELECT {$column} FROM {$table} WHERE {$idColumn} = ?"
-        );
-        $stmt->bind_param('i', $idValue);
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $result = $stmt->get_result();
         assert($result instanceof \mysqli_result);
-        $row = $result->fetch_assoc();
+        $rows = [];
+        while ($row = $result->fetch_assoc()) {
+            $rows[] = $row;
+        }
         $stmt->close();
 
-        return is_array($row) && isset($row[$column]) && is_string($row[$column])
-            ? $row[$column]
-            : null;
+        return $rows;
+    }
+
+    /**
+     * Persist the updated serialized structure by the row's own key column.
+     */
+    private function updateSerializedRow(string $table, string $column, string $newSerialized, string $rowId): void
+    {
+        $this->logger->progress(sprintf(
+            "  [%s] UPDATE serialized %s SET %s WHERE ID='%s'",
+            $table,
+            $table,
+            $column,
+            $rowId,
+        ));
+
+        $stmt = $this->connection->prepare(
+            "UPDATE {$table} SET {$column} = ? WHERE ID = ?"
+        );
+        $stmt->bind_param('ss', $newSerialized, $rowId);
+        $stmt->execute();
+        $stmt->close();
     }
 
     /**
@@ -306,65 +369,14 @@ class ConsistencyProcessor
      */
     private function extractAnchorValue(string $source, array $anchorRow): ?string
     {
-        if ($source === 'anchor.VALUE' || $source === 'anchor.VALUE') {
-            return $anchorRow['VALUE'] ?? null;
-        }
-
         if (str_starts_with($source, 'anchor.')) {
             $key = substr($source, 7);
-            return $anchorRow[$key] ?? null;
+            $value = $anchorRow[$key] ?? null;
+
+            return $value === null ? null : (string) $value;
         }
 
         return null;
-    }
-
-    /**
-     * @param      string  $table          The table
-     * @param      string  $column         The column
-     * @param      string  $newSerialized  The new serialized
-     * @param      array<mixed>   $anchorRow      The anchor row
-     * @param      array<mixed>   $join           The join
-     */
-    private function updateSerializedInTable(
-        string $table,
-        string $column,
-        string $newSerialized,
-        array $anchorRow,
-        array $join
-    ): void {
-        $entityIdColumn = $join['entity_id_column'] ?? 'OWNER_ID';
-        $entityId = $anchorRow[$entityIdColumn] ?? null;
-
-        if ($entityId === null) {
-            return;
-        }
-
-        $entityIdColumnEscaped = $this->connection->escape($entityIdColumn);
-        $tableEscaped = $this->connection->escape($table);
-        $columnEscaped = $this->connection->escape($column);
-        $newSerializedEscaped = $this->connection->escape($newSerialized);
-        $entityIdEscaped = $this->connection->escape($entityId);
-
-        $filtersSql = '';
-        if (isset($join['filters']) && \is_array($join['filters'])) {
-            $filterClauses = [];
-            foreach ($join['filters'] as $filter) {
-                $filterClauses[] = "{$filter['column']} = '{$filter['value']}'";
-            }
-            $filtersSql = ' AND ' . implode(' AND ', $filterClauses);
-        }
-
-        $this->logger->progress(sprintf(
-            "  [%s] UPDATE serialized %s.%s WHERE %s=%s",
-            $tableEscaped,
-            $tableEscaped,
-            $columnEscaped,
-            $entityIdColumn,
-            $entityIdEscaped,
-        ));
-
-        $sql = "UPDATE {$tableEscaped} SET {$columnEscaped} = '{$newSerializedEscaped}' WHERE {$entityIdColumn} = {$entityIdEscaped}{$filtersSql}";
-        $this->connection->query($sql);
     }
 
     private function updateById(string $table, string $column, string $value, int $id, string $idColumn): void

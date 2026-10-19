@@ -193,6 +193,68 @@ class Configuration
                 "Consistency group {$index} missing 'targets'"
             );
         }
+
+        if (!\is_array($group['targets'])) {
+            throw new ConfigValidationException(
+                "Consistency group {$index} 'targets' must be an array"
+            );
+        }
+
+        foreach ($group['targets'] as $targetIndex => $target) {
+            $this->validateConsistencyTarget($group, $index, $targetIndex, $target);
+        }
+    }
+
+    /**
+     * @param      array<string, mixed> $group
+     * @param      int     $groupIndex
+     * @param      int|string  $targetIndex
+     * @param      mixed   $target
+     * @throws     \DataVeil\Exception\ConfigValidationException
+     */
+    private function validateConsistencyTarget(array $group, int $groupIndex, int|string $targetIndex, mixed $target): void
+    {
+        if (!\is_array($target)) {
+            throw new ConfigValidationException(
+                "Consistency group {$groupIndex} target {$targetIndex} must be an array"
+            );
+        }
+
+        $join = $target['join'] ?? null;
+
+        if (!\is_array($join) || ($join['type'] ?? null) !== 'serialized_value_match') {
+            return;
+        }
+
+        if (!isset($join['entity_id_column']) || !\is_string($join['entity_id_column'])) {
+            throw new ConfigValidationException(
+                "Consistency group {$groupIndex} target {$targetIndex}: serialized_value_match missing 'join.entity_id_column'"
+            );
+        }
+
+        if (!isset($join['ref_entity_column']) || !\is_string($join['ref_entity_column'])) {
+            throw new ConfigValidationException(
+                "Consistency group {$groupIndex} target {$targetIndex}: serialized_value_match missing 'join.ref_entity_column'"
+            );
+        }
+
+        if (!isset($target['serialization']) || !\is_array($target['serialization'])) {
+            throw new ConfigValidationException(
+                "Consistency group {$groupIndex} target {$targetIndex}: serialized_value_match missing 'serialization' section"
+            );
+        }
+
+        if (!isset($target['serialization']['match_key']) || !\is_string($target['serialization']['match_key'])) {
+            throw new ConfigValidationException(
+                "Consistency group {$groupIndex} target {$targetIndex}: serialized_value_match missing 'serialization.match_key'"
+            );
+        }
+
+        if (!isset($target['serialization']['match_value_source']) || !\is_string($target['serialization']['match_value_source'])) {
+            throw new ConfigValidationException(
+                "Consistency group {$groupIndex} target {$targetIndex}: serialized_value_match missing 'serialization.match_value_source'"
+            );
+        }
     }
 
     /**

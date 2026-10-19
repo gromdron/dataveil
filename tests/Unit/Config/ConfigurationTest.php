@@ -176,6 +176,95 @@ class ConfigurationTest extends TestCase
         unlink($settingsPath);
     }
 
+    public function testSerializedTargetValidConfigPassesValidation(): void
+    {
+        $config = $this->createTempConfigWithSerializedTarget(
+            join: [
+                'type' => 'serialized_value_match',
+                'entity_id_column' => 'OWNER_ID',
+                'ref_entity_column' => 'ENTITY_ID',
+            ],
+            serialization: [
+                'type' => 'php_serialize',
+                'match_key' => 'PHONE',
+                'match_value_source' => 'anchor.VALUE',
+            ],
+        );
+
+        $this->assertNotEmpty($config->getConsistencyGroups());
+
+        unlink($this->lastTempConfigPath);
+    }
+
+    public function testSerializedTargetMissingRefEntityColumnThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage("missing 'join.ref_entity_column'");
+
+        $this->createTempConfigWithSerializedTarget(
+            join: [
+                'type' => 'serialized_value_match',
+                'entity_id_column' => 'OWNER_ID',
+            ],
+            serialization: [
+                'type' => 'php_serialize',
+                'match_key' => 'PHONE',
+                'match_value_source' => 'anchor.VALUE',
+            ],
+        );
+    }
+
+    public function testSerializedTargetMissingEntityIdColumnThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage("missing 'join.entity_id_column'");
+
+        $this->createTempConfigWithSerializedTarget(
+            join: [
+                'type' => 'serialized_value_match',
+                'ref_entity_column' => 'ENTITY_ID',
+            ],
+            serialization: [
+                'type' => 'php_serialize',
+                'match_key' => 'PHONE',
+                'match_value_source' => 'anchor.VALUE',
+            ],
+        );
+    }
+
+    public function testSerializedTargetMissingSerializationSectionThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage("missing 'serialization' section");
+
+        $this->createTempConfigWithSerializedTarget(
+            join: [
+                'type' => 'serialized_value_match',
+                'entity_id_column' => 'OWNER_ID',
+                'ref_entity_column' => 'ENTITY_ID',
+            ],
+            serialization: null,
+        );
+    }
+
+    public function testSerializedTargetMissingMatchKeyThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage("missing 'serialization.match_key'");
+
+        $this->createTempConfigWithSerializedTarget(
+            join: [
+                'type' => 'serialized_value_match',
+                'entity_id_column' => 'OWNER_ID',
+                'ref_entity_column' => 'ENTITY_ID',
+            ],
+            serialization: [
+                'type' => 'php_serialize',
+                'match_value_source' => 'anchor.VALUE',
+            ],
+        );
+    }
+
     public function testLoadMysqlSourceConfiguration(): void
     {
         $configPath = $this->createTempConfig([
@@ -319,6 +408,57 @@ class ConfigurationTest extends TestCase
 
         new Configuration($configPath);
         unlink($configPath);
+    }
+
+    private string $lastTempConfigPath = '';
+
+    /**
+     * @param array<string, mixed> $join
+     * @param array<string, mixed>|null $serialization
+     */
+    private function createTempConfigWithSerializedTarget(array $join, ?array $serialization): Configuration
+    {
+        $settingsPath = $this->createTempSettingsFile();
+        $target = [
+            'table' => 'b_crm_act_comm',
+            'column' => 'ENTITY_SETTINGS',
+            'join' => $join,
+        ];
+        if ($serialization !== null) {
+            $target['serialization'] = $serialization;
+        }
+
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'bitrix_settings',
+                'bitrix' => [
+                    'settings_file' => $settingsPath,
+                ],
+            ],
+            'consistency_groups' => [
+                [
+                    'id' => 'test_group',
+                    'anchor' => [
+                        'table' => 'b_crm_field_multi',
+                        'id_column' => 'ID',
+                        'context_columns' => ['ENTITY_ID', 'VALUE'],
+                    ],
+                    'generator' => [
+                        'deterministic' => true,
+                        'strategy' => 'phone_fake',
+                        'salt_source' => 'primary',
+                    ],
+                    'targets' => [$target],
+                ],
+            ],
+        ]);
+        $this->lastTempConfigPath = $configPath;
+
+        try {
+            return new Configuration($configPath);
+        } finally {
+            unlink($settingsPath);
+        }
     }
 
     /**

@@ -116,6 +116,7 @@ consistency_groups:
             join:
                 type: "serialized_value_match"
                 entity_id_column: "OWNER_ID"
+                ref_entity_column: "ENTITY_ID"
             serialization:
                 type: "php_serialize"
                 match_key: "PHONE"
