@@ -129,6 +129,10 @@ class Configuration
             $this->password = $mysqlConfig['password'];
         }
 
+        if (isset($this->config['rules'])) {
+            $this->validateRules();
+        }
+
         if (isset($this->config['strategies']) && \is_array($this->config['strategies'])) {
             $this->validateStrategies();
         }
@@ -136,6 +140,54 @@ class Configuration
         if (isset($this->config['consistency_groups']) && \is_array($this->config['consistency_groups'])) {
             foreach ($this->config['consistency_groups'] as $index => $group) {
                 $this->validateConsistencyGroup($group, $index);
+            }
+        }
+    }
+
+    private function validateRules(): void
+    {
+        $rules = $this->config['rules'];
+
+        if (!\is_array($rules)) {
+            throw new ConfigValidationException(
+                "Invalid 'rules' section: must be an array"
+            );
+        }
+
+        $tables = $rules['tables'] ?? [];
+
+        if (!\is_array($tables)) {
+            throw new ConfigValidationException(
+                "Invalid 'rules.tables' section: must be an array"
+            );
+        }
+
+        $allowedActions = ['truncate', 'update', 'delete'];
+
+        foreach ($tables as $index => $rule) {
+            if (!\is_array($rule)) {
+                throw new ConfigValidationException(
+                    "Rule {$index}: must be an array"
+                );
+            }
+
+            if (!isset($rule['name']) || !\is_string($rule['name'])) {
+                throw new ConfigValidationException(
+                    "Rule {$index}: missing or invalid 'name'"
+                );
+            }
+
+            if (!isset($rule['action']) || !\is_string($rule['action'])) {
+                throw new ConfigValidationException(
+                    "Rule '{$rule['name']}': missing or invalid 'action'"
+                );
+            }
+
+            if (!\in_array($rule['action'], $allowedActions, true)) {
+                throw new ConfigValidationException(
+                    "Rule '{$rule['name']}': unknown action '{$rule['action']}'. "
+                    . 'Expected: ' . \implode(', ', $allowedActions)
+                );
             }
         }
     }

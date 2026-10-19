@@ -72,6 +72,8 @@ class AnonymizerService
     {
         $this->logger->info('Starting database anonymization...');
 
+        $this->warnIfTruncateRulesPresent();
+
         try {
             $this->connection->executeInTransaction(function (): void {
                 $this->logger->notice('Configuration read success');
@@ -83,6 +85,27 @@ class AnonymizerService
         } catch (\Exception $e) {
             $this->logger->error('Anonymization failed: ' . $e->getMessage());
             throw $e;
+        }
+    }
+
+    private function warnIfTruncateRulesPresent(): void
+    {
+        $truncateCount = 0;
+
+        foreach ($this->config->getRules() as $rule) {
+            if (($rule['action'] ?? null) === 'truncate') {
+                $truncateCount++;
+            }
+        }
+
+        if ($truncateCount > 0) {
+            $this->logger->warning(sprintf(
+                'Configuration contains %d truncate rule(s): '
+                . 'TRUNCATE TABLE causes an implicit COMMIT in MySQL/MariaDB, '
+                . 'so this run CANNOT be fully rolled back on error. '
+                . "Use action 'delete' instead if atomicity is required.",
+                $truncateCount,
+            ));
         }
     }
 
@@ -99,6 +122,8 @@ class AnonymizerService
 
             if ($action === "truncate") {
                 $this->truncateTable($table);
+            } elseif ($action === "delete") {
+                $this->deleteTable($table);
             } elseif ($action === "update") {
                 $this->updateTableFields($rule);
             }
@@ -109,6 +134,14 @@ class AnonymizerService
     {
         $escapedTable = $this->connection->escape($table);
         $this->connection->query("TRUNCATE TABLE {$escapedTable}");
+    }
+
+    private function deleteTable(string $table): void
+    {
+        $this->logger->progress("Table `{$table}`: deleting all rows (transactional)");
+
+        $escapedTable = $this->connection->escape($table);
+        $this->connection->query("DELETE FROM {$escapedTable}");
     }
 
     /**
