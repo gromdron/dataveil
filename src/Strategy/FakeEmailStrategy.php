@@ -16,16 +16,10 @@ class FakeEmailStrategy extends AbstractStrategy
 
     public function generate(mixed $originalValue, ?string $salt = null): string
     {
-        if ($salt !== null) {
-            $id = $salt;
-        } elseif ($originalValue === null) {
+        if ($salt === null) {
             return '';
-        } elseif (is_numeric($originalValue)) {
-            $id = $originalValue;
-        } else {
-            $id = crc32($originalValue);
         }
 
-        return "user_{$id}@fake.local";
+        return "user_" . substr($salt, 0, 16) . "@fake.local";
     }
 }

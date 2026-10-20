@@ -54,10 +54,10 @@ class FakePhoneStrategyTest extends TestCase
         $this->assertSame($first, $second);
     }
 
-    public function testDifferentNumericOriginalValuesProduceDifferentPhones(): void
+    public function testDifferentSeedsProduceDifferentPhones(): void
     {
-        $first = $this->strategy->generate(1000, null);
-        $second = $this->strategy->generate(2000, null);
+        $first = $this->strategy->generate(null, str_repeat('0', 12) . '1');
+        $second = $this->strategy->generate(null, str_repeat('0', 12) . '2');
 
         $this->assertNotSame($first, $second);
     }
@@ -65,5 +65,10 @@ class FakePhoneStrategyTest extends TestCase
     public function testNullOriginalValueWithoutSaltReturnsEmptyString(): void
     {
         $this->assertSame('', $this->strategy->generate(null, null));
+    }
+
+    public function testNonNullOriginalWithoutSeedReturnsEmptyString(): void
+    {
+        $this->assertSame('', $this->strategy->generate(1000, null));
     }
 }

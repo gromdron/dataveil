@@ -34,15 +34,10 @@ class StringRandomStrategy extends AbstractStrategy
 
     public function generate(mixed $originalValue, ?string $salt = null): string
     {
-        if ($salt !== null) {
-            $id = abs(crc32($salt));
-        } elseif (is_string($originalValue) && $originalValue !== '') {
-            $id = abs(crc32($originalValue));
-        } elseif (is_numeric($originalValue)) {
-            $id = abs(crc32((string) $originalValue));
-        } else {
-            $id = abs(crc32('test_value'));
+        if ($salt === null) {
+            return '';
         }
+        $id = (int) hexdec(substr($salt, 0, 13));
 
         $chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
         $randomPart = '';
