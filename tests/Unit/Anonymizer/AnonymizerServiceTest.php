@@ -37,6 +37,7 @@ class AnonymizerServiceTest extends TestCase
         $config->method('getRules')->willReturn($rules);
         $config->method('getConsistencyGroups')->willReturn([]);
         $config->method('getStrategies')->willReturn([]);
+        $config->method('getSecretKey')->willReturn('test-key');
 
         $service = new AnonymizerService($config, $logger ?? $this->createMock(DataVeilLoggerInterface::class));
 
@@ -333,6 +334,59 @@ class AnonymizerServiceTest extends TestCase
 
         $this->assertNotNull($capturedSelectSql);
         $this->assertStringContainsString('EMAIL', $capturedSelectSql);
+    }
+
+    public function testGeneratesValuesThroughStrategyManager(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $schemaValidator = $this->createMock(SchemaValidator::class);
+        $strategyManager = $this->createMock(StrategyManager::class);
+
+        $schemaValidator->method('validateColumn')->willReturn(true);
+        $strategyManager->method('getStrategy')->willReturn($this->createMockStrategy());
+        $strategyManager->expects($this->once())
+            ->method('generate')
+            ->with('email_fake', 'old@test.com', 'old@test.com') // salt_source: value → salt = оригинал
+            ->willReturn('anonymized@test.com');
+
+        $selectStmt = $this->createMock(\mysqli_stmt::class);
+        $updateStmt = $this->createMock(\mysqli_stmt::class);
+
+        $result = $this->createMock(\mysqli_result::class);
+        $result->method('fetch_assoc')
+            ->willReturnOnConsecutiveCalls(
+                ['ID' => '1', 'EMAIL' => 'old@test.com'],
+                null,
+            );
+
+        $selectStmt->method('get_result')->willReturn($result);
+
+        $updateStmt->expects($this->once())->method('bind_param');
+        $updateStmt->expects($this->once())->method('execute');
+
+        $connection->method('getPrimaryKeys')->willReturn(['ID']);
+        $connection->method('prepare')
+            ->willReturnCallback(function (string $sql) use ($selectStmt, $updateStmt) {
+                if (str_starts_with($sql, 'SELECT')) {
+                    return $selectStmt;
+                }
+                return $updateStmt;
+            });
+
+        $service = $this->createService(
+            rules: [[
+                'name' => 'b_user',
+                'action' => 'update',
+                'fields' => [
+                    ['column' => 'EMAIL', 'strategy' => 'email_fake', 'salt_source' => 'value'],
+                ],
+            ]],
+            connection: $connection,
+            schemaValidator: $schemaValidator,
+            strategyManager: $strategyManager,
+        );
+
+        $service->anonymize();
     }
 
     public function testUpdateWithCompositePrimaryKey(): void
