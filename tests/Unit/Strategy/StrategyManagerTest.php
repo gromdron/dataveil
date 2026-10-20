@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DataVeil\Tests\Unit\Strategy;
 
+use DataVeil\Strategy\SeedDeriver;
 use DataVeil\Strategy\StrategyManager;
 use DataVeil\Strategy\StringRandomStrategy;
 use PHPUnit\Framework\TestCase;
@@ -184,5 +185,31 @@ class StrategyManagerTest extends TestCase
         $this->assertArrayHasKey('lastname_fake', $map);
         $this->assertArrayHasKey('string_random', $map);
         $this->assertArrayHasKey('empty', $map);
+    }
+
+    public function testSameKeyAndInputsProduceIdenticalOutputs(): void
+    {
+        $m1 = new StrategyManager();
+        $m2 = new StrategyManager();
+        $this->assertSame(
+            $m1->generate('email_fake', 'user123', 'pk-1'),
+            $m2->generate('email_fake', 'user123', 'pk-1'),
+        );
+    }
+
+    public function testCustomDeriverKeyChangesOutput(): void
+    {
+        $a = (new StrategyManager([], new SeedDeriver('key-a')))->generate('email_fake', 'user123');
+        $b = (new StrategyManager([], new SeedDeriver('key-b')))->generate('email_fake', 'user123');
+        $this->assertNotSame($a, $b);
+    }
+
+    public function testEmailWithSaltFromValueDoesNotLeakOriginal(): void
+    {
+        // salt_source: value симулируется передачей оригинала в качестве соли
+        $email = 'ivanov@secret-corp.ru';
+        $out = (new StrategyManager())->generate('email_fake', $email, $email);
+        $this->assertStringNotContainsString($email, $out);
+        $this->assertStringNotContainsString('ivanov', $out);
     }
 }
