@@ -615,6 +615,27 @@ class ConfigurationTest extends TestCase
         unlink($configPath);
     }
 
+    public function testSettingsBlockExplicitNullThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'mysql',
+                'mysql' => [
+                    'host' => 'localhost',
+                    'database' => 'db',
+                    'login' => 'root',
+                    'password' => '',
+                ],
+            ],
+            'settings' => null,
+        ]);
+
+        new Configuration($configPath);
+        unlink($configPath);
+    }
+
     private string $lastTempConfigPath = '';
 
     /**

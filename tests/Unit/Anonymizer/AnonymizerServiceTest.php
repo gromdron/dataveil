@@ -22,8 +22,9 @@ class AnonymizerServiceTest extends TestCase
         array $rules,
         Connection $connection,
         SchemaValidator $schemaValidator,
-        StrategyManager $strategyManager,
+        ?StrategyManager $strategyManager = null,
         ?DataVeilLoggerInterface $logger = null,
+        string $secretKey = 'test-key',
     ): AnonymizerService {
         $config = $this->createMock(Configuration::class);
         $config->method('getDatabaseConfig')->willReturn([
@@ -37,7 +38,7 @@ class AnonymizerServiceTest extends TestCase
         $config->method('getRules')->willReturn($rules);
         $config->method('getConsistencyGroups')->willReturn([]);
         $config->method('getStrategies')->willReturn([]);
-        $config->method('getSecretKey')->willReturn('test-key');
+        $config->method('getSecretKey')->willReturn($secretKey);
 
         $service = new AnonymizerService($config, $logger ?? $this->createMock(DataVeilLoggerInterface::class));
 
@@ -52,10 +53,22 @@ class AnonymizerServiceTest extends TestCase
         $refValidator = new \ReflectionProperty($service, 'schemaValidator');
         $refValidator->setValue($service, $schemaValidator);
 
-        $refStrategy = new \ReflectionProperty($service, 'strategyManager');
-        $refStrategy->setValue($service, $strategyManager);
+        if ($strategyManager !== null) {
+            $refStrategy = new \ReflectionProperty($service, 'strategyManager');
+            $refStrategy->setValue($service, $strategyManager);
+        }
 
         return $service;
+    }
+
+    private function getStrategyManager(AnonymizerService $service): StrategyManager
+    {
+        $refStrategy = new \ReflectionProperty($service, 'strategyManager');
+
+        /** @var StrategyManager $strategyManager */
+        $strategyManager = $refStrategy->getValue($service);
+
+        return $strategyManager;
     }
 
     private function createMockStrategy(): StrategyInterface
@@ -440,5 +453,31 @@ class AnonymizerServiceTest extends TestCase
 
         $this->assertNotNull($capturedUpdateSql);
         $this->assertStringContainsString('WHERE USER_ID = ? AND ROLE_ID = ?', $capturedUpdateSql);
+    }
+
+    public function testSecretKeyFromConfigReachesStrategyGeneration(): void
+    {
+        $serviceOne = $this->createService(
+            rules: [],
+            connection: $this->createMock(Connection::class),
+            schemaValidator: $this->createMock(SchemaValidator::class),
+            secretKey: 'key-one',
+        );
+
+        $serviceTwo = $this->createService(
+            rules: [],
+            connection: $this->createMock(Connection::class),
+            schemaValidator: $this->createMock(SchemaValidator::class),
+            secretKey: 'key-two',
+        );
+
+        $outputOne = $this->getStrategyManager($serviceOne)
+            ->generate('email_fake', 'user123', null);
+        $outputTwo = $this->getStrategyManager($serviceTwo)
+            ->generate('email_fake', 'user123', null);
+
+        $this->assertNotSame('', $outputOne);
+        $this->assertNotSame('', $outputTwo);
+        $this->assertNotSame($outputOne, $outputTwo);
     }
 }

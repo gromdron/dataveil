@@ -133,7 +133,7 @@ class Configuration
             $this->password = $mysqlConfig['password'];
         }
 
-        if (isset($this->config['settings'])) {
+        if (\array_key_exists('settings', $this->config)) {
             $this->validateSettings();
         }
 
