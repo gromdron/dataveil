@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace DataVeil\Strategy;
 
+use DataVeil\Config\Configuration;
+
 class StrategyManager
 {
     /**
@@ -23,11 +25,15 @@ class StrategyManager
      */
     private array $strategies = [];
 
+    private readonly SeedDeriver $deriver;
+
     /**
      * @param array<int, array{name: string, type: string, options?: array<string, mixed>}> $customStrategies
      */
-    public function __construct(array $customStrategies = [])
+    public function __construct(array $customStrategies = [], ?SeedDeriver $deriver = null)
     {
+        $this->deriver = $deriver ?? new SeedDeriver(Configuration::DEFAULT_SECRET_KEY);
+
         foreach (self::$typeMap as $type => $class) {
             $this->strategies[$type] = new $class($type);
         }
@@ -80,6 +86,8 @@ class StrategyManager
             throw new \InvalidArgumentException("Unknown strategy: {$strategyName}");
         }
 
-        return $strategy->generate($originalValue, $salt);
+        $seed = $this->deriver->derive($originalValue, $salt);
+
+        return $strategy->generate($originalValue, $seed);
     }
 }

@@ -6,6 +6,9 @@ database:
         settings_file: "/home/bitrix/www/bitrix/.settings.php"
         connection_name: "default"
 
+settings:
+  secret_key: "change-me-in-production"
+
 strategies:
     # ============================================================
     # БАЗОВЫЕ ТИПЫ

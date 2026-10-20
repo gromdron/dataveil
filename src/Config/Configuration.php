@@ -9,6 +9,8 @@ use Symfony\Component\Yaml\Yaml;
 
 class Configuration
 {
+    public const DEFAULT_SECRET_KEY = 'dataveil-default-secret-key-v1';
+
     /**
      * @var array<string, mixed>
      */
@@ -16,6 +18,8 @@ class Configuration
     private string $settingsFile = '/home/bitrix/www/bitrix/.settings.php';
     private string $connectionName = 'default';
     private string $source = 'bitrix_settings';
+    private string $secretKey = self::DEFAULT_SECRET_KEY;
+    private bool $explicitSecretKey = false;
     private string $host = '';
     private int $port = 3306;
     private string $database = '';
@@ -129,6 +133,10 @@ class Configuration
             $this->password = $mysqlConfig['password'];
         }
 
+        if (\array_key_exists('settings', $this->config)) {
+            $this->validateSettings();
+        }
+
         if (isset($this->config['rules'])) {
             $this->validateRules();
         }
@@ -142,6 +150,26 @@ class Configuration
                 $this->validateConsistencyGroup($group, $index);
             }
         }
+    }
+
+    private function validateSettings(): void
+    {
+        $settings = $this->config['settings'];
+
+        if (!\is_array($settings)) {
+            throw new ConfigValidationException(
+                "Invalid 'settings' section: must be an array"
+            );
+        }
+
+        if (!isset($settings['secret_key']) || !\is_string($settings['secret_key']) || $settings['secret_key'] === '') {
+            throw new ConfigValidationException(
+                "Missing or invalid 'settings.secret_key' in configuration"
+            );
+        }
+
+        $this->secretKey = $settings['secret_key'];
+        $this->explicitSecretKey = true;
     }
 
     private function validateRules(): void
@@ -352,5 +380,15 @@ class Configuration
     public function getStrategies(): array
     {
         return $this->config['strategies'] ?? [];
+    }
+
+    public function getSecretKey(): string
+    {
+        return $this->secretKey;
+    }
+
+    public function hasExplicitSecretKey(): bool
+    {
+        return $this->explicitSecretKey;
     }
 }

@@ -12,6 +12,7 @@ use DataVeil\Database\Connection;
 use DataVeil\Database\SchemaValidator;
 use DataVeil\Consistency\ConsistencyProcessor;
 use DataVeil\Serializer\SerializerHandler;
+use DataVeil\Strategy\SeedDeriver;
 use DataVeil\Strategy\StrategyManager;
 use DataVeil\Strategy\StrategyInterface;
 use DataVeil\Exception\DataVeilException;
@@ -55,7 +56,7 @@ class AnonymizerService
             );
         }
 
-        $this->strategyManager = new StrategyManager($config->getStrategies());
+        $this->strategyManager = new StrategyManager($config->getStrategies(), new SeedDeriver($config->getSecretKey()));
         $serializerHandler = new SerializerHandler();
         $this->logger = $logger ?? new NullLogger();
         $this->schemaValidator = new SchemaValidator($this->connection);
@@ -177,7 +178,7 @@ class AnonymizerService
 
             $validFields[] = [
                 'column' => $column,
-                'strategy' => $strategyObj,
+                'strategyName' => $strategyName,
                 'saltSource' => $saltSource,
             ];
 
@@ -240,7 +241,7 @@ class AnonymizerService
                     $salt = (string) $originalValue;
                 }
 
-                $newValue = $field['strategy']->generate($originalValue, $salt);
+                $newValue = $this->strategyManager->generate($field['strategyName'], $originalValue, $salt);
                 $newValues[] = $newValue;
 
                 $this->logger->progress(sprintf(

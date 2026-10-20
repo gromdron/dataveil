@@ -517,6 +517,125 @@ class ConfigurationTest extends TestCase
         unlink($configPath);
     }
 
+    public function testConfigWithoutSettingsBlockUsesDefaultKey(): void
+    {
+        $this->assertSame('dataveil-default-secret-key-v1', Configuration::DEFAULT_SECRET_KEY);
+
+        $config = new Configuration(__DIR__ . '/../../configuration.yaml');
+
+        $this->assertSame(Configuration::DEFAULT_SECRET_KEY, $config->getSecretKey());
+        $this->assertFalse($config->hasExplicitSecretKey());
+    }
+
+    public function testConfigWithExplicitSecretKey(): void
+    {
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'mysql',
+                'mysql' => [
+                    'host' => 'localhost',
+                    'database' => 'db',
+                    'login' => 'root',
+                    'password' => '',
+                ],
+            ],
+            'settings' => ['secret_key' => 'my-own-key'],
+        ]);
+
+        $config = new Configuration($configPath);
+        unlink($configPath);
+
+        $this->assertSame('my-own-key', $config->getSecretKey());
+        $this->assertTrue($config->hasExplicitSecretKey());
+    }
+
+    public function testSettingsBlockMissingSecretKeyThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage("Missing or invalid 'settings.secret_key' in configuration");
+
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'mysql',
+                'mysql' => [
+                    'host' => 'localhost',
+                    'database' => 'db',
+                    'login' => 'root',
+                    'password' => '',
+                ],
+            ],
+            'settings' => [],
+        ]);
+
+        new Configuration($configPath);
+        unlink($configPath);
+    }
+
+    public function testSettingsBlockEmptySecretKeyThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage("Missing or invalid 'settings.secret_key' in configuration");
+
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'mysql',
+                'mysql' => [
+                    'host' => 'localhost',
+                    'database' => 'db',
+                    'login' => 'root',
+                    'password' => '',
+                ],
+            ],
+            'settings' => ['secret_key' => ''],
+        ]);
+
+        new Configuration($configPath);
+        unlink($configPath);
+    }
+
+    public function testSettingsSectionNotArrayThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage("Invalid 'settings' section: must be an array");
+
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'mysql',
+                'mysql' => [
+                    'host' => 'localhost',
+                    'database' => 'db',
+                    'login' => 'root',
+                    'password' => '',
+                ],
+            ],
+            'settings' => 'oops',
+        ]);
+
+        new Configuration($configPath);
+        unlink($configPath);
+    }
+
+    public function testSettingsBlockExplicitNullThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'mysql',
+                'mysql' => [
+                    'host' => 'localhost',
+                    'database' => 'db',
+                    'login' => 'root',
+                    'password' => '',
+                ],
+            ],
+            'settings' => null,
+        ]);
+
+        new Configuration($configPath);
+        unlink($configPath);
+    }
+
     private string $lastTempConfigPath = '';
 
     /**

@@ -32,15 +32,10 @@ class FakePhoneStrategy extends AbstractStrategy
 
     public function generate(mixed $originalValue, ?string $salt = null): string
     {
-        if ($salt !== null) {
-            $id = intval($salt);
-        } elseif ($originalValue === null) {
+        if ($salt === null) {
             return '';
-        } elseif (is_numeric($originalValue)) {
-            $id = $originalValue;
-        } else {
-            $id = crc32($originalValue);
         }
+        $id = (int) hexdec(substr($salt, 0, 13));
 
         $areasCount = count(self::$areaCodes);
         $index = ($id % $areasCount + $areasCount) % $areasCount;
