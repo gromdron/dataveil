@@ -519,6 +519,8 @@ class ConfigurationTest extends TestCase
 
     public function testConfigWithoutSettingsBlockUsesDefaultKey(): void
     {
+        $this->assertSame('dataveil-default-secret-key-v1', Configuration::DEFAULT_SECRET_KEY);
+
         $config = new Configuration(__DIR__ . '/../../configuration.yaml');
 
         $this->assertSame(Configuration::DEFAULT_SECRET_KEY, $config->getSecretKey());
