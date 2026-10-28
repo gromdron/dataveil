@@ -19,6 +19,10 @@
         "phpunit/phpunit": "^10.0",
         "phpstan/phpstan": "^1.10"
     },
+    "suggest": {
+        "ext-mysqli": "Required for MySQL/MariaDB databases",
+        "ext-pgsql": "Required for PostgreSQL databases"
+    },
     "autoload": {
         "psr-4": {
             "DataVeil\\": "src/"

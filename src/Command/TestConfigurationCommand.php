@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace DataVeil\Command;
 
-use DataVeil\Config\BitrixSettingsParser;
 use DataVeil\Config\Configuration;
-use DataVeil\Database\Connection;
+use DataVeil\Database\ConnectionFactory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -59,8 +58,10 @@ class TestConfigurationCommand extends Command
                 $io->note(sprintf("Source: bitrix_settings"));
                 $io->note(sprintf("Settings file: %s", $dbConfig['settings_file']));
                 $io->note(sprintf("Connection name: %s", $dbConfig['connection_name']));
+                $io->note(sprintf("Driver: %s", ConnectionFactory::create($dbConfig)->getDriverName()));
             } else {
-                $io->note(sprintf("Source: mysql"));
+                $io->note(sprintf("Source: %s", $dbConfig['source']));
+                $io->note(sprintf("Driver: %s", $dbConfig['driver']));
                 $io->note(sprintf("Host: %s:%d", $dbConfig['host'], $dbConfig['port']));
                 $io->note(sprintf("Database: %s", $dbConfig['database']));
                 $io->note(sprintf("Login: %s", $dbConfig['login']));
@@ -102,29 +103,7 @@ class TestConfigurationCommand extends Command
     {
         $connection = null;
         try {
-            if ($dbConfig['source'] === 'bitrix_settings') {
-                $parser = new BitrixSettingsParser(
-                    $dbConfig['settings_file'],
-                    $dbConfig['connection_name'],
-                );
-                $connectionParams = $parser->parse();
-
-                $connection = new Connection(
-                    $connectionParams['host'],
-                    $connectionParams['database'],
-                    $connectionParams['login'],
-                    $connectionParams['password'],
-                    $connectionParams['port'],
-                );
-            } else {
-                $connection = new Connection(
-                    $dbConfig['host'],
-                    $dbConfig['database'],
-                    $dbConfig['login'],
-                    $dbConfig['password'],
-                    $dbConfig['port'],
-                );
-            }
+            $connection = ConnectionFactory::create($dbConfig);
 
             $connection->query('SELECT 1');
             $io->success('Connection: OK');

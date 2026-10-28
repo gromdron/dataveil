@@ -7,21 +7,21 @@ namespace DataVeil\Consistency;
 use DataVeil\Config\Configuration;
 use DataVeil\Console\DataVeilLoggerInterface;
 use DataVeil\Console\NullLogger;
-use DataVeil\Database\Connection;
+use DataVeil\Database\ConnectionInterface;
 use DataVeil\Database\SchemaValidator;
 use DataVeil\Serializer\SerializerHandler;
 use DataVeil\Strategy\StrategyManager;
 
 class ConsistencyProcessor
 {
-    private Connection $connection;
+    private ConnectionInterface $connection;
     private StrategyManager $strategyManager;
     private SerializerHandler $serializerHandler;
     private SchemaValidator $schemaValidator;
     private DataVeilLoggerInterface $logger;
 
     public function __construct(
-        Connection $connection,
+        ConnectionInterface $connection,
         StrategyManager $strategyManager,
         SerializerHandler $serializerHandler,
         SchemaValidator $schemaValidator,
@@ -126,8 +126,12 @@ class ConsistencyProcessor
             }
         }
 
-        $sql = 'SELECT ' . $idColumn . ', ' . implode(', ', $contextColumns);
-        $sql .= ' FROM ' . $table;
+        $selectColumns = array_map(
+            fn(string $col): string => $this->connection->quoteIdentifier($col),
+            array_merge([$idColumn], $contextColumns),
+        );
+        $sql = 'SELECT ' . implode(', ', $selectColumns);
+        $sql .= ' FROM ' . $this->connection->quoteIdentifier($table);
 
         $params = [];
         if (!empty($filters)) {
@@ -135,30 +139,13 @@ class ConsistencyProcessor
             foreach ($filters as $filter) {
                 $column = $filter['column'];
                 $value = $filter['value'];
-                $whereClauses[] = "{$column} = ?";
+                $whereClauses[] = $this->connection->quoteIdentifier($column) . ' = ?';
                 $params[] = $value;
             }
             $sql .= ' WHERE ' . implode(' AND ', $whereClauses);
         }
 
-        $stmt = $this->connection->prepare($sql);
-
-        if (!empty($params)) {
-            $types = str_repeat('s', count($params));
-            $stmt->bind_param($types, ...$params);
-        }
-
-        $stmt->execute();
-        $result = $stmt->get_result();
-        assert($result instanceof \mysqli_result);
-        $rows = [];
-        while ($row = $result->fetch_assoc()) {
-            $rows[] = $row;
-        }
-
-        $stmt->close();
-
-        return $rows;
+        return $this->connection->selectAll($sql, $params);
     }
 
     /**
@@ -314,30 +301,23 @@ class ConsistencyProcessor
         $entityIdColumn = $join['entity_id_column'] ?? 'OWNER_ID';
         $keyColumn = $join['key_column'] ?? 'ID';
 
-        $sql = "SELECT {$keyColumn}, {$column} FROM {$table} WHERE {$entityIdColumn} = ?";
-        $types = 's';
+        $sql = sprintf(
+            'SELECT %s, %s FROM %s WHERE %s = ?',
+            $this->connection->quoteIdentifier($keyColumn),
+            $this->connection->quoteIdentifier($column),
+            $this->connection->quoteIdentifier($table),
+            $this->connection->quoteIdentifier($entityIdColumn),
+        );
         $params = [$anchorEntityId];
 
         if (!empty($join['filters']) && \is_array($join['filters'])) {
             foreach ($join['filters'] as $filter) {
-                $sql .= " AND {$filter['column']} = ?";
-                $types .= 's';
+                $sql .= ' AND ' . $this->connection->quoteIdentifier($filter['column']) . ' = ?';
                 $params[] = $filter['value'];
             }
         }
 
-        $stmt = $this->connection->prepare($sql);
-        $stmt->bind_param($types, ...$params);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        assert($result instanceof \mysqli_result);
-        $rows = [];
-        while ($row = $result->fetch_assoc()) {
-            $rows[] = $row;
-        }
-        $stmt->close();
-
-        return $rows;
+        return $this->connection->selectAll($sql, $params);
     }
 
     /**
@@ -353,12 +333,15 @@ class ConsistencyProcessor
             $rowId,
         ));
 
-        $stmt = $this->connection->prepare(
-            "UPDATE {$table} SET {$column} = ? WHERE ID = ?"
+        $this->connection->execute(
+            sprintf(
+                'UPDATE %s SET %s = ? WHERE %s = ?',
+                $this->connection->quoteIdentifier($table),
+                $this->connection->quoteIdentifier($column),
+                $this->connection->quoteIdentifier('ID'),
+            ),
+            [$newSerialized, $rowId],
         );
-        $stmt->bind_param('ss', $newSerialized, $rowId);
-        $stmt->execute();
-        $stmt->close();
     }
 
     /**
@@ -391,12 +374,15 @@ class ConsistencyProcessor
             $id,
         ));
 
-        $stmt = $this->connection->prepare(
-            "UPDATE {$table} SET {$column} = ? WHERE {$idColumn} = ?"
+        $this->connection->execute(
+            sprintf(
+                'UPDATE %s SET %s = ? WHERE %s = ?',
+                $this->connection->quoteIdentifier($table),
+                $this->connection->quoteIdentifier($column),
+                $this->connection->quoteIdentifier($idColumn),
+            ),
+            [$value, (string) $id],
         );
-        $stmt->bind_param('si', $value, $id);
-        $stmt->execute();
-        $stmt->close();
     }
 
     private function updateByValue(
@@ -416,11 +402,14 @@ class ConsistencyProcessor
             (string) $anchorValue,
         ));
 
-        $stmt = $this->connection->prepare(
-            "UPDATE {$table} SET {$column} = ? WHERE {$keyColumn} = ?"
+        $this->connection->execute(
+            sprintf(
+                'UPDATE %s SET %s = ? WHERE %s = ?',
+                $this->connection->quoteIdentifier($table),
+                $this->connection->quoteIdentifier($column),
+                $this->connection->quoteIdentifier($keyColumn),
+            ),
+            [$value, (string) $anchorValue],
         );
-        $stmt->bind_param('ss', $value, $anchorValue);
-        $stmt->execute();
-        $stmt->close();
     }
 }

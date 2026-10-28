@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DataVeil\Tests\Unit\Database;
 
-use DataVeil\Database\Connection;
+use DataVeil\Database\ConnectionInterface;
 use DataVeil\Database\SchemaValidator;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -27,12 +27,12 @@ class SchemaValidatorTest extends TestCase
 
     public function testValidateColumnReturnsTrueWhenColumnExists(): void
     {
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('getTableColumns')
             ->with('b_user')
             ->willReturn([
-                ['Field' => 'ID', 'Type' => 'int'],
-                ['Field' => 'EMAIL', 'Type' => 'varchar(255)'],
+                ['name' => 'ID', 'is_primary' => true],
+                ['name' => 'EMAIL', 'is_primary' => false],
             ]);
 
         $validator = new SchemaValidator($connection);
@@ -45,12 +45,12 @@ class SchemaValidatorTest extends TestCase
 
     public function testValidateColumnReturnsFalseWhenColumnMissing(): void
     {
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('getTableColumns')
             ->with('b_user')
             ->willReturn([
-                ['Field' => 'ID', 'Type' => 'int'],
-                ['Field' => 'EMAIL', 'Type' => 'varchar(255)'],
+                ['name' => 'ID', 'is_primary' => true],
+                ['name' => 'EMAIL', 'is_primary' => false],
             ]);
 
         $validator = new SchemaValidator($connection);
@@ -65,7 +65,7 @@ class SchemaValidatorTest extends TestCase
 
     public function testValidateColumnReturnsFalseWhenTableMissing(): void
     {
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('getTableColumns')
             ->with('b_nonexistent')
             ->willThrowException(new \DataVeil\Exception\DatabaseException('Table not found'));
@@ -81,7 +81,7 @@ class SchemaValidatorTest extends TestCase
 
     public function testValidateColumnMissingTableWarningConsistentOnRepeatedCalls(): void
     {
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('getTableColumns')
             ->with('b_nonexistent')
             ->willThrowException(new \DataVeil\Exception\DatabaseException('Table not found'));
@@ -98,13 +98,13 @@ class SchemaValidatorTest extends TestCase
 
     public function testValidateColumnCachesTableSchema(): void
     {
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())
             ->method('getTableColumns')
             ->with('b_user')
             ->willReturn([
-                ['Field' => 'ID', 'Type' => 'int'],
-                ['Field' => 'EMAIL', 'Type' => 'varchar(255)'],
+                ['name' => 'ID', 'is_primary' => true],
+                ['name' => 'EMAIL', 'is_primary' => false],
             ]);
 
         $validator = new SchemaValidator($connection);
@@ -115,10 +115,10 @@ class SchemaValidatorTest extends TestCase
 
     public function testValidateColumnIsCaseSensitive(): void
     {
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('getTableColumns')
             ->willReturn([
-                ['Field' => 'email', 'Type' => 'varchar(255)'],
+                ['name' => 'email', 'is_primary' => false],
             ]);
 
         $validator = new SchemaValidator($connection);
@@ -130,7 +130,7 @@ class SchemaValidatorTest extends TestCase
 
     public function testValidateTableReturnsTrueWhenTableExists(): void
     {
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('getTables')
             ->willReturn(['b_user', 'b_order']);
 
@@ -144,7 +144,7 @@ class SchemaValidatorTest extends TestCase
 
     public function testValidateTableReturnsFalseWhenTableMissing(): void
     {
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('getTables')
             ->willReturn(['b_user', 'b_order']);
 
@@ -159,7 +159,7 @@ class SchemaValidatorTest extends TestCase
 
     public function testValidateTableCachesTableList(): void
     {
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects($this->once())
             ->method('getTables')
             ->willReturn(['b_user', 'b_order']);
@@ -172,9 +172,9 @@ class SchemaValidatorTest extends TestCase
 
     public function testWarningMessageFormatForMissingColumn(): void
     {
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('getTableColumns')
-            ->willReturn([['Field' => 'ID', 'Type' => 'int']]);
+            ->willReturn([['name' => 'ID', 'is_primary' => true]]);
 
         $validator = new SchemaValidator($connection);
         $validator->validateColumn('b_user', 'FAKE_COL', $this->logger);
@@ -184,7 +184,7 @@ class SchemaValidatorTest extends TestCase
 
     public function testWarningMessageFormatForMissingTable(): void
     {
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('getTables')
             ->willReturn(['b_user']);
 

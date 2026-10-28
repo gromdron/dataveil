@@ -9,13 +9,13 @@ use Psr\Log\LoggerInterface;
 
 class SchemaValidator
 {
-    private Connection $connection;
+    private ConnectionInterface $connection;
     /** @var array<string, list<string>> */
     private array $columnsCache = [];
     /** @var list<string>|null */
     private ?array $tablesCache = null;
 
-    public function __construct(Connection $connection)
+    public function __construct(ConnectionInterface $connection)
     {
         $this->connection = $connection;
     }
@@ -72,7 +72,7 @@ class SchemaValidator
 
         $names = [];
         foreach ($columnsData as $column) {
-            $names[] = $column['Field'];
+            $names[] = $column['name'];
         }
 
         $this->columnsCache[$table] = $names;

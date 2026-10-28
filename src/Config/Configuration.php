@@ -55,10 +55,10 @@ class Configuration
 
         if (
             !is_string($this->config['database']['source']) ||
-            !in_array($this->config['database']['source'], ['bitrix_settings', 'mysql'])
+            !in_array($this->config['database']['source'], ['bitrix_settings', 'mysql', 'pgsql'])
         ) {
             throw new ConfigValidationException(
-                "Undefined 'database.source' type. Expected: ['bitrix_settings', 'mysql']"
+                "Undefined 'database.source' type. Expected: ['bitrix_settings', 'mysql', 'pgsql']"
             );
         }
 
@@ -100,37 +100,17 @@ class Configuration
                 );
             }
 
-            $mysqlConfig = $this->config['database']['mysql'];
+            $this->validateDirectDatabaseSection($this->config['database']['mysql'], 'mysql', 3306);
+        }
 
-            if (!isset($mysqlConfig['host']) || !is_string($mysqlConfig['host'])) {
+        if ($this->config['database']['source'] === 'pgsql') {
+            if (!isset($this->config['database']['pgsql'])) {
                 throw new ConfigValidationException(
-                    "Missing or invalid 'host' in database.mysql configuration"
+                    "Missing 'database.pgsql' section in configuration"
                 );
             }
 
-            if (!isset($mysqlConfig['database']) || !is_string($mysqlConfig['database'])) {
-                throw new ConfigValidationException(
-                    "Missing or invalid 'database' in database.mysql configuration"
-                );
-            }
-
-            if (!isset($mysqlConfig['login']) || !is_string($mysqlConfig['login'])) {
-                throw new ConfigValidationException(
-                    "Missing or invalid 'login' in database.mysql configuration"
-                );
-            }
-
-            if (!isset($mysqlConfig['password'])) {
-                throw new ConfigValidationException(
-                    "Missing 'password' in database.mysql configuration"
-                );
-            }
-
-            $this->host = $mysqlConfig['host'];
-            $this->port = $mysqlConfig['port'] ?? 3306;
-            $this->database = $mysqlConfig['database'];
-            $this->login = $mysqlConfig['login'];
-            $this->password = $mysqlConfig['password'];
+            $this->validateDirectDatabaseSection($this->config['database']['pgsql'], 'pgsql', 5432);
         }
 
         if (\array_key_exists('settings', $this->config)) {
@@ -150,6 +130,43 @@ class Configuration
                 $this->validateConsistencyGroup($group, $index);
             }
         }
+    }
+
+    /**
+     * @param array<string, mixed> $section
+     * @throws \DataVeil\Exception\ConfigValidationException
+     */
+    private function validateDirectDatabaseSection(array $section, string $name, int $defaultPort): void
+    {
+        if (!isset($section['host']) || !is_string($section['host'])) {
+            throw new ConfigValidationException(
+                "Missing or invalid 'host' in database.{$name} configuration"
+            );
+        }
+
+        if (!isset($section['database']) || !is_string($section['database'])) {
+            throw new ConfigValidationException(
+                "Missing or invalid 'database' in database.{$name} configuration"
+            );
+        }
+
+        if (!isset($section['login']) || !is_string($section['login'])) {
+            throw new ConfigValidationException(
+                "Missing or invalid 'login' in database.{$name} configuration"
+            );
+        }
+
+        if (!isset($section['password'])) {
+            throw new ConfigValidationException(
+                "Missing 'password' in database.{$name} configuration"
+            );
+        }
+
+        $this->host = $section['host'];
+        $this->port = $section['port'] ?? $defaultPort;
+        $this->database = $section['database'];
+        $this->login = $section['login'];
+        $this->password = $section['password'];
     }
 
     private function validateSettings(): void
@@ -348,6 +365,7 @@ class Configuration
             $config['settings_file'] = $this->settingsFile;
             $config['connection_name'] = $this->connectionName;
         } else {
+            $config['driver'] = $this->source;
             $config['host'] = $this->host;
             $config['port'] = $this->port;
             $config['database'] = $this->database;

@@ -78,6 +78,70 @@ YAML;
         }
     }
 
+    public function testShowsDriverForDirectMysqlSource(): void
+    {
+        $yaml = <<<'YAML'
+database:
+    source: "mysql"
+    mysql:
+        host: "localhost"
+        port: 3306
+        database: "test"
+        login: "root"
+        password: "pass"
+YAML;
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'dv_');
+        file_put_contents($tmpFile, $yaml);
+
+        try {
+            $command = new TestConfigurationCommand();
+            $tester = new CommandTester($command);
+
+            $tester->execute([
+                'config' => $tmpFile,
+            ]);
+
+            $output = $tester->getDisplay();
+
+            $this->assertStringContainsString('Source: mysql', $output);
+            $this->assertStringContainsString('Driver: mysql', $output);
+        } finally {
+            unlink($tmpFile);
+        }
+    }
+
+    public function testShowsDriverFromBitrixSettings(): void
+    {
+        $yaml = <<<YAML
+database:
+    source: "bitrix_settings"
+    bitrix:
+        settings_file: "%s"
+        connection_name: "default"
+YAML;
+
+        $settingsFile = __DIR__ . '/../../fixtures/.settings_pgsql.php';
+        $tmpFile = tempnam(sys_get_temp_dir(), 'dv_');
+        file_put_contents($tmpFile, sprintf($yaml, $settingsFile));
+
+        try {
+            $command = new TestConfigurationCommand();
+            $tester = new CommandTester($command);
+
+            $tester->execute([
+                'config' => $tmpFile,
+            ]);
+
+            $output = $tester->getDisplay();
+
+            $this->assertStringContainsString('Source: bitrix_settings', $output);
+            $this->assertStringContainsString('Driver: pgsql', $output);
+        } finally {
+            unlink($tmpFile);
+        }
+    }
+
     public function testInvalidConfigPath(): void
     {
         $command = new TestConfigurationCommand();
