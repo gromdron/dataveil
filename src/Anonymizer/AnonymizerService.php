@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace DataVeil\Anonymizer;
 
 use DataVeil\Config\Configuration;
-use DataVeil\Config\BitrixSettingsParser;
 use DataVeil\Console\DataVeilLoggerInterface;
 use DataVeil\Console\NullLogger;
-use DataVeil\Database\Connection;
+use DataVeil\Database\ConnectionFactory;
+use DataVeil\Database\ConnectionInterface;
 use DataVeil\Database\SchemaValidator;
 use DataVeil\Consistency\ConsistencyProcessor;
 use DataVeil\Serializer\SerializerHandler;
@@ -20,7 +20,7 @@ use DataVeil\Exception\DataVeilException;
 class AnonymizerService
 {
     private Configuration $config;
-    private Connection $connection;
+    private ConnectionInterface $connection;
     private StrategyManager $strategyManager;
     private ConsistencyProcessor $consistencyProcessor;
     private SchemaValidator $schemaValidator;
@@ -30,31 +30,7 @@ class AnonymizerService
     {
         $this->config = $config;
 
-        $dbConfig = $config->getDatabaseConfig();
-
-        if ($dbConfig['source'] === 'bitrix_settings') {
-            $parser = new BitrixSettingsParser(
-                $dbConfig['settings_file'],
-                $dbConfig['connection_name'],
-            );
-            $connectionParams = $parser->parse();
-
-            $this->connection = new Connection(
-                $connectionParams['host'],
-                $connectionParams['database'],
-                $connectionParams['login'],
-                $connectionParams['password'],
-                $connectionParams['port'],
-            );
-        } else {
-            $this->connection = new Connection(
-                $dbConfig['host'],
-                $dbConfig['database'],
-                $dbConfig['login'],
-                $dbConfig['password'],
-                $dbConfig['port'],
-            );
-        }
+        $this->connection = ConnectionFactory::create($config->getDatabaseConfig());
 
         $this->strategyManager = new StrategyManager($config->getStrategies(), new SeedDeriver($config->getSecretKey()));
         $serializerHandler = new SerializerHandler();
@@ -73,7 +49,9 @@ class AnonymizerService
     {
         $this->logger->info('Starting database anonymization...');
 
-        $this->warnIfTruncateRulesPresent();
+        if (!$this->connection->isTruncateTransactional()) {
+            $this->warnIfTruncateRulesPresent();
+        }
 
         try {
             $this->connection->executeInTransaction(function (): void {
@@ -102,7 +80,10 @@ class AnonymizerService
         if ($truncateCount > 0) {
             $this->logger->warning(sprintf(
                 'Configuration contains %d truncate rule(s): '
-                . 'TRUNCATE TABLE causes an implicit COMMIT in MySQL/MariaDB, '
+                . sprintf(
+                    'TRUNCATE TABLE causes an implicit COMMIT in %s, ',
+                    $this->connection->getDriverName(),
+                )
                 . 'so this run CANNOT be fully rolled back on error. '
                 . "Use action 'delete' instead if atomicity is required.",
                 $truncateCount,
@@ -133,16 +114,16 @@ class AnonymizerService
 
     private function truncateTable(string $table): void
     {
-        $escapedTable = $this->connection->escape($table);
-        $this->connection->query("TRUNCATE TABLE {$escapedTable}");
+        $quotedTable = $this->connection->quoteIdentifier($table);
+        $this->connection->query("TRUNCATE TABLE {$quotedTable}");
     }
 
     private function deleteTable(string $table): void
     {
         $this->logger->progress("Table `{$table}`: deleting all rows (transactional)");
 
-        $escapedTable = $this->connection->escape($table);
-        $this->connection->query("DELETE FROM {$escapedTable}");
+        $quotedTable = $this->connection->quoteIdentifier($table);
+        $this->connection->query("DELETE FROM {$quotedTable}");
     }
 
     /**
@@ -191,30 +172,25 @@ class AnonymizerService
             return;
         }
 
+        $quotedTable = $this->connection->quoteIdentifier($table);
         $setClauses = array_map(
-            static fn(array $f): string => "{$f['column']} = ?",
+            fn(array $f): string => $this->connection->quoteIdentifier((string) $f['column']) . ' = ?',
             $validFields,
         );
         $whereClauses = array_map(
-            static fn(string $col): string => "{$col} = ?",
+            fn(string $col): string => $this->connection->quoteIdentifier($col) . ' = ?',
             $pkColumns,
         );
-        $updateSql = "UPDATE {$table} SET " . implode(', ', $setClauses) . " WHERE " . implode(' AND ', $whereClauses);
+        $updateSql = "UPDATE {$quotedTable} SET " . implode(', ', $setClauses) . " WHERE " . implode(' AND ', $whereClauses);
         $updateStmt = $this->connection->prepare($updateSql);
 
-        $types = str_repeat('s', count($validFields)) . str_repeat('s', count($pkColumns));
-
-        $selectSql = "SELECT " . implode(', ', array_unique($selectColumns))
-            . " FROM {$table} WHERE {$where}";
-        $selectStmt = $this->connection->prepare($selectSql);
-        $selectStmt->execute();
-        $result = $selectStmt->get_result();
-
-        if ($result === false) {
-            $selectStmt->close();
-            $updateStmt->close();
-            return;
-        }
+        $quotedSelectColumns = array_map(
+            fn(string $col): string => $this->connection->quoteIdentifier($col),
+            array_unique($selectColumns),
+        );
+        $selectSql = "SELECT " . implode(', ', $quotedSelectColumns)
+            . " FROM {$quotedTable} WHERE {$where}";
+        $rows = $this->connection->selectAll($selectSql);
 
         $this->logger->progress("Table `{$table}`: fetching rows with WHERE {$where}");
 
@@ -222,7 +198,7 @@ class AnonymizerService
         $this->logger->progress("Fields to anonymize: " . implode(', ', $fieldNames));
 
         $current = 0;
-        while ($row = $result->fetch_assoc()) {
+        foreach ($rows as $row) {
             $current++;
 
             $pkValues = [];
@@ -255,15 +231,9 @@ class AnonymizerService
             }
 
             $values = array_merge($newValues, $pkValues);
-            $refs = [];
-            foreach ($values as $k => $v) {
-                $refs[$k] = &$values[$k];
-            }
-
-            $updateStmt->bind_param($types, ...$refs);
 
             try {
-                $updateStmt->execute();
+                $updateStmt->execute($values);
             } catch (\Exception $e) {
                 $this->logger->progress(sprintf(
                     "  [%s] UPDATE FAILED for Row PK=%s | New values: %s",
@@ -278,7 +248,6 @@ class AnonymizerService
             }
         }
 
-        $selectStmt->close();
         $updateStmt->close();
     }
 
@@ -289,7 +258,7 @@ class AnonymizerService
         $this->consistencyProcessor->processConsistencyGroups($groups);
     }
 
-    public function getConnection(): Connection
+    public function getConnection(): ConnectionInterface
     {
         return $this->connection;
     }

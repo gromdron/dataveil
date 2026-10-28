@@ -6,7 +6,7 @@ namespace DataVeil\Tests\Unit\Consistency;
 
 use DataVeil\Console\DataVeilLoggerInterface;
 use DataVeil\Consistency\ConsistencyProcessor;
-use DataVeil\Database\Connection;
+use DataVeil\Database\ConnectionInterface;
 use DataVeil\Database\SchemaValidator;
 use DataVeil\Serializer\SerializerHandler;
 use DataVeil\Strategy\StrategyManager;
@@ -21,10 +21,10 @@ class ConsistencyProcessorTest extends TestCase
     {
         $bindLog = [];
         $connection = $this->createConnectionMock([
-            'FROM b_crm_field_multi' => [
+            'FROM `b_crm_field_multi`' => [
                 ['ID' => '10', 'ENTITY_ID' => '100', 'VALUE' => self::ANCHOR_PHONE, 'TYPE_ID' => 'PHONE'],
             ],
-            'FROM b_crm_act_comm' => [
+            'FROM `b_crm_act_comm`' => [
                 ['ID' => '55', 'ENTITY_SETTINGS' => serialize(['PHONE' => self::ANCHOR_PHONE, 'TYPE' => 'CALL'])],
             ],
         ], $bindLog);
@@ -34,7 +34,7 @@ class ConsistencyProcessorTest extends TestCase
 
         $selects = array_values(array_filter(
             $bindLog,
-            static fn (array $b): bool => str_contains($b['sql'], 'FROM b_crm_act_comm')
+            static fn (array $b): bool => str_contains($b['sql'], 'FROM `b_crm_act_comm`')
         ));
         $this->assertNotEmpty(
             $selects,
@@ -43,7 +43,7 @@ class ConsistencyProcessorTest extends TestCase
 
         $updates = array_values(array_filter(
             $bindLog,
-            static fn (array $b): bool => str_starts_with($b['sql'], 'UPDATE b_crm_act_comm')
+            static fn (array $b): bool => str_starts_with($b['sql'], 'UPDATE `b_crm_act_comm`')
         ));
         $this->assertCount(1, $updates, 'Expected exactly one UPDATE of b_crm_act_comm');
 
@@ -64,10 +64,10 @@ class ConsistencyProcessorTest extends TestCase
     {
         $bindLog = [];
         $connection = $this->createConnectionMock([
-            'FROM b_crm_field_multi' => [
+            'FROM `b_crm_field_multi`' => [
                 ['ID' => '10', 'ENTITY_ID' => '100', 'VALUE' => self::ANCHOR_PHONE, 'TYPE_ID' => 'PHONE'],
             ],
-            'FROM b_crm_act_comm' => [
+            'FROM `b_crm_act_comm`' => [
                 ['ID' => '55', 'ENTITY_SETTINGS' => serialize(['PHONE' => self::ANCHOR_PHONE])],
             ],
         ], $bindLog);
@@ -77,11 +77,11 @@ class ConsistencyProcessorTest extends TestCase
 
         $selects = array_values(array_filter(
             $bindLog,
-            static fn (array $b): bool => str_contains($b['sql'], 'FROM b_crm_act_comm')
+            static fn (array $b): bool => str_contains($b['sql'], 'FROM `b_crm_act_comm`')
         ));
         $this->assertNotEmpty($selects);
-        $this->assertStringContainsString('OWNER_ID = ?', $selects[0]['sql']);
-        $this->assertStringContainsString('OWNER_TYPE_ID = ?', $selects[0]['sql']);
+        $this->assertStringContainsString('`OWNER_ID` = ?', $selects[0]['sql']);
+        $this->assertStringContainsString('`OWNER_TYPE_ID` = ?', $selects[0]['sql']);
         $this->assertSame(['100', '3'], $selects[0]['params']);
     }
 
@@ -89,10 +89,10 @@ class ConsistencyProcessorTest extends TestCase
     {
         $bindLog = [];
         $connection = $this->createConnectionMock([
-            'FROM b_crm_field_multi' => [
+            'FROM `b_crm_field_multi`' => [
                 ['ID' => '10', 'ENTITY_ID' => '100', 'VALUE' => self::ANCHOR_PHONE, 'TYPE_ID' => 'PHONE'],
             ],
-            'FROM b_crm_act_comm' => [
+            'FROM `b_crm_act_comm`' => [
                 ['ID' => '56', 'ENTITY_SETTINGS' => serialize(['PHONE' => '+70000000000'])],
             ],
         ], $bindLog);
@@ -102,7 +102,7 @@ class ConsistencyProcessorTest extends TestCase
 
         $updates = array_values(array_filter(
             $bindLog,
-            static fn (array $b): bool => str_starts_with($b['sql'], 'UPDATE b_crm_act_comm')
+            static fn (array $b): bool => str_starts_with($b['sql'], 'UPDATE `b_crm_act_comm`')
         ));
         $this->assertSame([], $updates, 'A row whose serialized value does not match must not be rewritten');
     }
@@ -111,10 +111,10 @@ class ConsistencyProcessorTest extends TestCase
     {
         $bindLog = [];
         $connection = $this->createConnectionMock([
-            'FROM b_crm_field_multi' => [
+            'FROM `b_crm_field_multi`' => [
                 ['ID' => '10', 'ENTITY_ID' => '100', 'VALUE' => self::ANCHOR_PHONE, 'TYPE_ID' => 'PHONE'],
             ],
-            'FROM b_crm_act_comm' => [],
+            'FROM `b_crm_act_comm`' => [],
         ], $bindLog);
 
         $processor = $this->createProcessor($connection);
@@ -122,14 +122,14 @@ class ConsistencyProcessorTest extends TestCase
 
         $updates = array_values(array_filter(
             $bindLog,
-            static fn (array $b): bool => str_starts_with($b['sql'], 'UPDATE b_crm_field_multi')
+            static fn (array $b): bool => str_starts_with($b['sql'], 'UPDATE `b_crm_field_multi`')
         ));
         $this->assertCount(1, $updates);
-        $this->assertStringContainsString('WHERE ID = ?', $updates[0]['sql']);
-        $this->assertSame([self::FAKE_PHONE, 10], $updates[0]['params']);
+        $this->assertStringContainsString('WHERE `ID` = ?', $updates[0]['sql']);
+        $this->assertSame([self::FAKE_PHONE, '10'], $updates[0]['params']);
     }
 
-    private function createProcessor(Connection $connection): ConsistencyProcessor
+    private function createProcessor(ConnectionInterface $connection): ConsistencyProcessor
     {
         $schemaValidator = $this->createMock(SchemaValidator::class);
         $schemaValidator->method('validateTable')->willReturn(true);
@@ -148,38 +148,37 @@ class ConsistencyProcessorTest extends TestCase
     }
 
     /**
-     * Connection mock that routes prepared SELECTs by SQL fragment and logs every bind_param call.
+     * Connection mock that routes SELECTs by SQL fragment and logs every selectAll/execute call.
      *
      * @param array<string, list<array<string, string>>> $selectRowsByFragment
-     * @param list<array{sql: string, types: string, params: list<mixed>}> $bindLog
+     * @param list<array{sql: string, params: list<mixed>}> $bindLog
      */
-    private function createConnectionMock(array $selectRowsByFragment, array &$bindLog): Connection
+    private function createConnectionMock(array $selectRowsByFragment, array &$bindLog): ConnectionInterface
     {
-        $connection = $this->createMock(Connection::class);
-        $connection->method('prepare')->willReturnCallback(
-            function (string $sql) use ($selectRowsByFragment, &$bindLog): \mysqli_stmt {
-                $stmt = $this->createMock(\mysqli_stmt::class);
+        $connection = $this->createMock(ConnectionInterface::class);
+
+        // Mirror the real drivers' quoting (backticks, как у MySQL) so built SQL stays predictable.
+        $connection->method('quoteIdentifier')
+            ->willReturnCallback(static fn(string $name): string => '`' . $name . '`');
+
+        $connection->method('selectAll')->willReturnCallback(
+            function (string $sql, array $params = []) use ($selectRowsByFragment, &$bindLog): array {
+                $bindLog[] = ['sql' => $sql, 'params' => array_values($params)];
 
                 foreach ($selectRowsByFragment as $fragment => $rows) {
                     if (str_contains($sql, $fragment)) {
-                        $result = $this->createMock(\mysqli_result::class);
-                        $result->method('fetch_assoc')
-                            ->willReturnOnConsecutiveCalls(...array_merge($rows, [null]));
-                        $stmt->method('get_result')->willReturn($result);
-                        break;
+                        return $rows;
                     }
                 }
 
-                $stmt->method('bind_param')->willReturnCallback(
-                    function (string $types, mixed ...$vars) use (&$bindLog, $sql): bool {
-                        $bindLog[] = ['sql' => $sql, 'types' => $types, 'params' => array_values($vars)];
-                        return true;
-                    }
-                );
-                $stmt->method('execute')->willReturn(true);
-                $stmt->method('close')->willReturn(true);
+                return [];
+            }
+        );
 
-                return $stmt;
+        $connection->method('execute')->willReturnCallback(
+            function (string $sql, array $params = []) use (&$bindLog): int {
+                $bindLog[] = ['sql' => $sql, 'params' => array_values($params)];
+                return 1;
             }
         );
 

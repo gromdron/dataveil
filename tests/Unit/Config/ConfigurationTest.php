@@ -23,6 +23,7 @@ class ConfigurationTest extends TestCase
 
         $this->assertArrayHasKey('source', $dbConfig);
         $this->assertSame('bitrix_settings', $dbConfig['source']);
+        $this->assertArrayNotHasKey('driver', $dbConfig);
         $this->assertArrayHasKey('settings_file', $dbConfig);
         $this->assertArrayHasKey('connection_name', $dbConfig);
     }
@@ -284,6 +285,7 @@ class ConfigurationTest extends TestCase
 
         $dbConfig = $config->getDatabaseConfig();
         $this->assertSame('mysql', $dbConfig['source']);
+        $this->assertSame('mysql', $dbConfig['driver']);
         $this->assertSame('127.0.0.1', $dbConfig['host']);
         $this->assertSame(3307, $dbConfig['port']);
         $this->assertSame('my_db', $dbConfig['database']);
@@ -310,6 +312,7 @@ class ConfigurationTest extends TestCase
         $config = new Configuration($configPath);
 
         $dbConfig = $config->getDatabaseConfig();
+        $this->assertSame('mysql', $dbConfig['driver']);
         $this->assertSame(3306, $dbConfig['port']);
 
         unlink($configPath);
@@ -403,6 +406,93 @@ class ConfigurationTest extends TestCase
                     'database' => 'test_db',
                     'login' => 'root',
                 ],
+            ],
+        ]);
+
+        new Configuration($configPath);
+        unlink($configPath);
+    }
+
+    public function testLoadPgsqlSourceConfiguration(): void
+    {
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'pgsql',
+                'pgsql' => [
+                    'host' => '127.0.0.1',
+                    'database' => 'pg_db',
+                    'login' => 'pgadmin',
+                    'password' => 'pgsecret',
+                ],
+            ],
+        ]);
+
+        $config = new Configuration($configPath);
+
+        $dbConfig = $config->getDatabaseConfig();
+        $this->assertSame('pgsql', $dbConfig['source']);
+        $this->assertSame('pgsql', $dbConfig['driver']);
+        $this->assertSame('127.0.0.1', $dbConfig['host']);
+        $this->assertSame(5432, $dbConfig['port']);
+        $this->assertSame('pg_db', $dbConfig['database']);
+        $this->assertSame('pgadmin', $dbConfig['login']);
+        $this->assertSame('pgsecret', $dbConfig['password']);
+
+        unlink($configPath);
+    }
+
+    public function testPgsqlSourceExplicitPortPreserved(): void
+    {
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'pgsql',
+                'pgsql' => [
+                    'host' => 'localhost',
+                    'port' => 5433,
+                    'database' => 'test_db',
+                    'login' => 'root',
+                    'password' => '',
+                ],
+            ],
+        ]);
+
+        $config = new Configuration($configPath);
+
+        $dbConfig = $config->getDatabaseConfig();
+        $this->assertSame('pgsql', $dbConfig['driver']);
+        $this->assertSame(5433, $dbConfig['port']);
+
+        unlink($configPath);
+    }
+
+    public function testPgsqlSourceMissingHostThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage("database.pgsql");
+
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'pgsql',
+                'pgsql' => [
+                    'database' => 'test_db',
+                    'login' => 'root',
+                    'password' => '',
+                ],
+            ],
+        ]);
+
+        new Configuration($configPath);
+        unlink($configPath);
+    }
+
+    public function testSqliteSourceThrows(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage("Expected: ['bitrix_settings', 'mysql', 'pgsql']");
+
+        $configPath = $this->createTempConfig([
+            'database' => [
+                'source' => 'sqlite',
             ],
         ]);
 

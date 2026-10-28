@@ -8,9 +8,8 @@ use DataVeil\Exception\ConnectionException;
 use DataVeil\Exception\DatabaseException;
 use mysqli;
 use mysqli_result;
-use mysqli_stmt;
 
-class Connection
+class MysqliConnection extends AbstractConnection
 {
     private string $host;
     private int $port;
@@ -30,10 +29,9 @@ class Connection
 
 
     /**
-     * @throws     \DataVeil\Exception\ConnectionException  (description)
-     * @return     mysqli  The connection.
+     * @throws \DataVeil\Exception\ConnectionException
      */
-    public function getConnection(): mysqli
+    private function getConnection(): mysqli
     {
         if ($this->_mysqli === null) {
             $this->connect();
@@ -60,9 +58,40 @@ class Connection
     }
 
     /**
+     * @param list<string|null> $params
+     * @return list<array<string, mixed>>
+     */
+    public function selectAll(string $sql, array $params = []): array
+    {
+        $stmt = $this->prepare($sql);
+
+        try {
+            return $stmt->execute($params);
+        } finally {
+            $stmt->close();
+        }
+    }
+
+    /**
+     * @param list<string|null> $params
+     */
+    public function execute(string $sql, array $params = []): int
+    {
+        $stmt = $this->prepare($sql);
+
+        try {
+            $stmt->execute($params);
+
+            return $this->affectedRows();
+        } finally {
+            $stmt->close();
+        }
+    }
+
+    /**
      * @throws     \DataVeil\Exception\DatabaseException
      */
-    public function query(string $sql): mysqli_result|bool
+    public function query(string $sql): void
     {
         $result = $this->getConnection()->query($sql);
 
@@ -70,14 +99,29 @@ class Connection
             throw new DatabaseException('Query failed: ' . $this->getConnection()->error);
         }
 
-        /** @phpstan-ignore-next-line */
+        if ($result instanceof mysqli_result) {
+            $result->free();
+        }
+    }
+
+    /**
+     * @throws     \DataVeil\Exception\DatabaseException
+     */
+    private function rawQuery(string $sql): mysqli_result
+    {
+        $result = $this->getConnection()->query($sql);
+
+        if ($result === false || $result === true) {
+            throw new DatabaseException('Query failed: ' . $this->getConnection()->error);
+        }
+
         return $result;
     }
 
     /**
      * @throws     \DataVeil\Exception\DatabaseException
      */
-    public function prepare(string $sql): mysqli_stmt
+    public function prepare(string $sql): StatementInterface
     {
         $stmt = $this->getConnection()->prepare($sql);
 
@@ -85,7 +129,7 @@ class Connection
             throw new DatabaseException('Prepare failed: ' . $this->getConnection()->error);
         }
 
-        return $stmt;
+        return new MysqliStatement($stmt);
     }
 
     /**
@@ -119,26 +163,11 @@ class Connection
     }
 
     /**
-     * @throws     \DataVeil\Exception\DatabaseException
-     */
-    public function executeInTransaction(callable $callback): void
-    {
-        $this->beginTransaction();
-        try {
-            $callback();
-            $this->commit();
-        } catch (\Throwable $e) {
-            $this->rollback();
-            throw $e;
-        }
-    }
-
-    /**
-     * @return     array<string>
+     * @return     list<string>
      */
     public function getTables(): array
     {
-        $result = $this->query('SHOW TABLES');
+        $result = $this->rawQuery('SHOW TABLES');
         $tables = [];
 
         while ($row = $result->fetch_row()) {
@@ -151,15 +180,18 @@ class Connection
     }
 
     /**
-     * @return     array<mixed>
+     * @return     list<array{name: string, is_primary: bool}>
      */
     public function getTableColumns(string $table): array
     {
-        $result = $this->query('DESCRIBE ' . $table);
+        $result = $this->rawQuery('DESCRIBE ' . $table);
         $columns = [];
 
         while ($row = $result->fetch_assoc()) {
-            $columns[] = $row;
+            $columns[] = [
+                'name' => (string) $row['Field'],
+                'is_primary' => ($row['Key'] ?? '') === 'PRI',
+            ];
         }
 
         $result->free();
@@ -167,38 +199,22 @@ class Connection
         return $columns;
     }
 
-    /**
-     * @return list<string>
-     */
-    public function getPrimaryKeys(string $table): array
+    public function quoteIdentifier(string $name): string
     {
-        $columns = $this->getTableColumns($table);
-        $pkColumns = [];
-
-        foreach ($columns as $column) {
-            if (($column['Key'] ?? '') === 'PRI') {
-                $pkColumns[] = $column['Field'];
-            }
-        }
-
-        if ($pkColumns === []) {
-            throw new DatabaseException("Table '{$table}' has no primary key");
-        }
-
-        return $pkColumns;
+        return '`' . str_replace('`', '``', $name) . '`';
     }
 
-    public function escape(string $value): string
+    public function isTruncateTransactional(): bool
     {
-        return $this->getConnection()->real_escape_string($value);
+        return false;
     }
 
-    public function getInsertId(): int
+    public function getDriverName(): string
     {
-        return (int) $this->getConnection()->insert_id;
+        return 'mysql';
     }
 
-    public function affectedRows(): int
+    private function affectedRows(): int
     {
         return (int) $this->getConnection()->affected_rows;
     }

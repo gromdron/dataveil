@@ -19,7 +19,7 @@ class BitrixSettingsParser
 
     /**
      * @throws     \DataVeil\Exception\ConfigValidationException
-     * @return     array{host: string, port: int, database: string, login: string, password: string}
+     * @return     array{host: string, port: int, database: string, login: string, password: string, driver: 'mysql'|'pgsql'}
      */
     public function parse(): array
     {
@@ -39,12 +39,16 @@ class BitrixSettingsParser
 
         $connectionConfig = $config['connections']['value'][$this->connectionName];
 
+        $className = (string) ($connectionConfig['className'] ?? '');
+        $driver = stripos($className, 'Pgsql') !== false ? 'pgsql' : 'mysql';
+
         return [
             'host' => $connectionConfig['host'] ?? 'localhost',
-            'port' => (int) ($connectionConfig['port'] ?? 3306),
+            'port' => (int) ($connectionConfig['port'] ?? ($driver === 'pgsql' ? 5432 : 3306)),
             'database' => $connectionConfig['database'] ?? '',
             'login' => $connectionConfig['login'] ?? 'root',
             'password' => $connectionConfig['password'] ?? '',
+            'driver' => $driver,
         ];
     }
 }
